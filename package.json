@@ -1,0 +1,55 @@
+{
+  "name": "@fink/prattler",
+  "version": "0.0.0-semantically-released",
+  "license": "MIT",
+  "engines": {
+    "node": ">=11.0.0"
+  },
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:fink-lang/prattler"
+  },
+  "bugs": "https://github.com/fink-lang/prattler/issues",
+  "homepage": "https://github.com/fink-lang/prattler",
+  "scripts": {
+    "default": "run clean test build",
+    "clean": "rimraf ./build",
+    "build": "run build:*",
+    "build:dir": "mkdir -p ./build/pkg/",
+    "build:babel": "babel src --out-dir build/pkg --ignore '**/*.test.js'",
+    "build:files": "cp ./package.json ./README.md ./LICENSE ./build/pkg/",
+    "test": "run lint jest",
+    "lint": "run lint:*",
+    "lint:js": "eslint --report-unused-disable-directives --ignore-path .gitignore .",
+    "jest": "jest --verbose --runInBand --no-cache ",
+    "cd": "run clean build release",
+    "release": "semantic-release"
+  },
+  "dependencies": {
+    "@fink/snippet": "^1.0.1"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/plugin-proposal-pipeline-operator": "^7.3.2",
+    "@babel/preset-env": "^7.3.4",
+    "@nearmap/eslint-config-base": "^1.1.0",
+    "babel-eslint": "^10.0.1",
+    "commitizen": "^3.0.7",
+    "cz-conventional-changelog": "^2.1.0",
+    "eslint": "^5.15.1",
+    "eslint-cli": "^1.1.1",
+    "eslint-plugin-babel": "^5.3.0",
+    "jest-cli": "^24.1.0",
+    "npx-run": "^2.1.2",
+    "semantic-release": "^15.13.3"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
+}

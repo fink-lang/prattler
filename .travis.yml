@@ -1,0 +1,18 @@
+language: node_js
+cache:
+  directories:
+    - ~/.npm
+
+notifications:
+  email: false
+
+node_js:
+  - '11'
+
+jobs:
+  include:
+    - stage: test
+      script: npx run
+    - stage: publish
+      if: branch = master
+      script: npx run cd

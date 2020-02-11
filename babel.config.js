@@ -3,13 +3,6 @@
 module.exports = {
   // Common to all envs below.
   plugins: [
-    // Makes sure babel does not include the same code snipped in each file,
-    // but imports helpers from a single module.
-    // '@babel/plugin-transform-runtime',
-    // '@babel/plugin-syntax-dynamic-import',
-    // '@babel/plugin-proposal-optional-catch-binding',
-    // '@babel/plugin-proposal-throw-expressions',
-    // '@babel/plugin-proposal-optional-chaining',
     ['@babel/plugin-proposal-pipeline-operator', {proposal: 'minimal'}]
   ],
 

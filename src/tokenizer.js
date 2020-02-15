@@ -1,3 +1,5 @@
+import {obj_has} from './obj';
+
 export const end_token = Symbol('end');
 
 
@@ -48,8 +50,10 @@ export const get_next_token = (ctx)=> {
     const [char, new_end] = get_next_char(code, end);
     const new_value = `${value}${char}`;
 
-    const is_seperator = (char in separators || value in separators);
-    const is_partial = (new_value in partials);
+    const is_seperator = (
+      obj_has(separators, char) || obj_has(separators, value)
+    );
+    const is_partial = obj_has(partials, new_value);
 
     if (is_seperator && !is_partial) {
 

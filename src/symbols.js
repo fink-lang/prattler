@@ -1,6 +1,7 @@
 import {add_token, end_token} from './tokenizer';
 import {token_error} from './errors';
 import {inspect} from 'util';
+import {obj_has} from './obj';
 
 
 export const other_token = Symbol('other');
@@ -68,7 +69,7 @@ export const add_non_separating = (symb)=> add_symbol(symb, auto, false);
 
 
 export const ignorable = (ctx, token)=> {
-  if (token && ctx.igns[token.value]) {
+  if (token && obj_has(ctx.igns, token.value)) {
     return true;
   }
   return false;
@@ -76,25 +77,26 @@ export const ignorable = (ctx, token)=> {
 
 
 export const nud = (ctx)=> {
-  const {curr_token, symbols: {nuds, lbps}} = ctx;
-  const nud_fn = curr_token.value in lbps
+  const {curr_token, symbols: {nuds}} = ctx;
+  const nud_fn = obj_has(nuds, curr_token.value)
     ? nuds[curr_token.value]
     : nuds[other_token];
 
-  if (!nud_fn) {
-    throw token_error(
-      `Cannot use ${inspect(curr_token.value)} as start of expression:`,
-      curr_token, ctx
-    );
-  }
+  // TODO: can anything be the start of an expr?
+  // if (!nud_fn) {
+  //   throw token_error(
+  //     `Cannot use ${inspect(curr_token.value)} as start of expression:`,
+  //     curr_token, ctx
+  //   );
+  // }
 
   return nud_fn(ctx);
 };
 
 
 export const led = (ctx, left)=> {
-  const {curr_token, symbols: {leds, lbps}} = ctx;
-  const led_fn = curr_token.value in lbps
+  const {curr_token, symbols: {leds}} = ctx;
+  const led_fn = obj_has(leds, curr_token.value)
     ? leds[curr_token.value]
     : leds[other_token];
 
@@ -112,7 +114,10 @@ export const led = (ctx, left)=> {
 export const next_lbp = (ctx, left)=> {
   const {next_token, symbols: {lbps}} = ctx;
 
-  const lbp_fn = lbps[next_token.value] || lbps[other_token];
+  const lbp_fn = obj_has(lbps, next_token.value)
+    ? lbps[next_token.value]
+    : lbps[other_token];
+
   return lbp_fn(ctx, left);
 };
 

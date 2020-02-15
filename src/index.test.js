@@ -223,15 +223,15 @@ describe('parse exceptions', ()=> {
   });
 
 
-  it('throws unexpected start of expression', ()=> {
+  it('throws unexpected infix', ()=> {
     const test_parse = ()=> parse(unindent`
       = 123`
     );
 
     expect(test_parse).toThrow(unindent`
-      Cannot use '=' as start of expression:
+      Cannot use '123' as an infix operator:
       1| = 123
-         ^`
+           ^`
     );
   });
 

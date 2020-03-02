@@ -7,12 +7,11 @@ module.exports = {
   modulePathIgnorePatterns: ['<rootDir>/build/'],
 
   transform: {
-    '^.+\\.js$': 'babel-jest',
     '^.+\\.fnk$': '@fink/jest'
   },
   transformIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/build/'],
 
-  testMatch: ['<rootDir>/**/*.test.js', '<rootDir>/**/*.test.fnk'],
+  testMatch: ['<rootDir>/**/*.test.fnk'],
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/build/'],
   watchPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/build/'],
 
@@ -22,7 +21,6 @@ module.exports = {
 
   collectCoverage: true,
   collectCoverageFrom: [
-    '<rootDir>/src/**/*.js',
     '<rootDir>/src/**/*.fnk'
   ],
   coverageDirectory: './build/cov',

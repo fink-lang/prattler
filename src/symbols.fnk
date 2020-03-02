@@ -107,7 +107,6 @@ led = fn ctx, left:
         `Cannot use ${inspect(curr_token.value)} as an infix operator:`,
         curr_token, ctx
       )
-      null
     else: led_fn(ctx, left)
 
 

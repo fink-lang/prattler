@@ -37,6 +37,14 @@ not_called_with = fn result, expected:
     else: caller.not.toBeCalledWith(...expected)
 
 
+to_throw = fn func, expected:
+  expect(func).toThrow(expected)
+
+
+not_to_throw = fn func:
+  expect(func).not.toThrow()
+
+
 mock_fn = fn ...args:
   jest.fn(...args)
 

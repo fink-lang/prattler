@@ -46,8 +46,6 @@ assert_token = fn token, expected, ctx:
         `Expected ${inspect(expected)} but found ${inspect(token.value)}:`,
         token, ctx
       )
-      # TODO
-      null
 
 
 assert_next = fn ctx, expected:
@@ -64,8 +62,6 @@ assert_not_end = fn ctx:
   match true:
     next_is_end(ctx):
       throw token_error(`Unexpected end of code:`, ctx.curr_token, ctx)
-      # TODO
-      null
 
 
 advance = fn ctx:

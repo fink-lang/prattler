@@ -1,4 +1,4 @@
-{describe, it, eq, is} = import './testing'
+{describe, it, eq, is, to_throw, not_to_throw, anything} = import './testing'
 
 {init_parser, start_parser} = import '.'
 {curr_is, curr_value, curr_loc} = import '.'
@@ -119,11 +119,11 @@ describe:: 'curr token tests, values, and assertions', fn:
   it:: 'handles token value assertions for current token', fn:
     [, ctx] = parse(`foobar = 123`)
 
-    expect(fn: assert_curr(ctx, '123')).not.toThrow()
-    expect(fn: assert_curr(ctx, 'foobar')).toThrow(`
+    (fn: assert_curr(ctx, '123')) not_to_throw anything
+    (fn: assert_curr(ctx, 'foobar')) to_throw `
       Expected 'foobar' but found '123':
       1| foobar = 123
-                  ^`)
+                  ^`
 
 
 describe:: 'next token tests and assertions', fn:
@@ -151,12 +151,12 @@ describe:: 'next token tests and assertions', fn:
   it:: 'handles token value assertions for next token', fn:
     [, ctx] = parse(`foobar = 123`)
 
-    expect(fn: assert_next(ctx, end_token)).not.toThrow()
-    expect(fn: assert_next(ctx, '123')).toThrow(`
+    (fn: assert_next(ctx, end_token)) not_to_throw anything
+
+    (fn: assert_next(ctx, '123')) to_throw `
       Expected '123' but found Symbol(end):
       1| foobar = 123
                      ^`
-    )
 
 
 describe:: 'advance to next token or throw', fn:
@@ -172,11 +172,10 @@ describe:: 'advance to next token or throw', fn:
   it:: 'throws when next token value is unexpected', fn:
     [, ctx] = parse(`foobar = 123; shrub = ni`)
 
-    expect(fn: assert_advance(ctx, '==')).toThrow(`
+    (fn: assert_advance(ctx, '==')) to_throw `
       Expected '==' but found ';':
       1| foobar = 123; shrub = ni
                      ^`
-    )
 
 
 describe:: 'parse exceptions', fn:
@@ -185,23 +184,20 @@ describe:: 'parse exceptions', fn:
       foobar =
     `)
 
-    expect(test_parse).toThrow(`
+    test_parse to_throw `
       Unexpected end of code:
       1| foobar =
                 ^`
-    )
 
 
   it:: 'throws unexpected infix', fn:
     test_parse = fn: parse(`
-      = 123`
-    )
+      = 123`)
 
-    expect(test_parse).toThrow(`
+    test_parse to_throw `
       Cannot use '123' as an infix operator:
       1| = 123
            ^`
-    )
 
 
   it:: 'throws non infix operator', fn:
@@ -209,12 +205,11 @@ describe:: 'parse exceptions', fn:
       foo = spam ni
     `)
 
-    expect(test_parse).toThrow(`
+    test_parse to_throw `
       Cannot use 'ni' as an infix operator:
       1| foo = spam ni
                     ^
       2| `
-    )
 
 
   it:: 'throws collecting text when not finding expected end', fn:
@@ -222,9 +217,8 @@ describe:: 'parse exceptions', fn:
       'foo bar`
     )
 
-    expect(test_parse).toThrow(`
+    test_parse to_throw `
       Unexpected end of code:
       1| 'foo bar
               ^`
-    )
 

@@ -1,0 +1,11 @@
+{highlight_code_loc} = import '@fink/snippet'
+
+
+
+token_error = fn msg, token, {tokenizer: {code}}:
+  snippet = highlight_code_loc(code, token.loc)
+  # TODO: hack to work around missing `new`
+  err = Object.create:: Error.prototype, {message: `${msg}\n${snippet}`}
+  # TODO: remove first line of err.stack
+  err
+

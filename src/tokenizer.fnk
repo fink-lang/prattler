@@ -1,0 +1,98 @@
+{obj_has} = import './obj'
+{find} = import './iter'
+
+end_token = Symbol('end')
+
+
+get_partials = fn [start, ...rest], pre='':
+  match rest.length:
+    0: {`${pre}${start}`: false}
+    else: {`${pre}${start}`: true, ...get_partials(rest, `${pre}${start}`)}
+
+
+get_loc = fn char, {pos, line, column}:
+  match char:
+    '\n': {pos: pos + 1, line: line + 1, column: 0}
+    else: {pos: pos + 1, line, column: column + 1}
+
+
+get_next_char = fn code, loc:
+  char = code.(loc.pos)
+  new_loc = get_loc(char, loc)
+  [char, new_loc]
+
+
+handle_end = fn value, start, end, ctx:
+  match value:
+    '': [
+      {value: end_token, loc: {start: end, end}},
+      {...ctx, partial_token: {value: '', loc: {start, end}}}
+    ]
+    else: [
+      {value, loc: {start, end}},
+      {...ctx, partial_token: {value: '', loc: {start, end}}}
+    ]
+
+{log} = console
+
+
+get_next_token = fn ctx:
+  {code, partials, separators, partial_token} = ctx
+  {value, loc: {start, end}} = partial_token
+
+  [foo, next_ctx] = pipe [value, end]:
+    unfold [value, end]:
+      match true:
+        end.pos < code.length:
+          [char, new_end] = get_next_char(code, end)
+          new_value = `${value}${char}`
+
+          is_seperator = (
+            obj_has(separators, char) || obj_has(separators, value)
+          )
+          is_partial = obj_has(partials, new_value)
+
+          match true:
+            is_seperator && !is_partial:
+              token = {value, loc: {start, end}}
+              partial_token = {value: char, loc: {start: end, end: new_end}}
+              next_ctx = {...ctx, partial_token}
+              [token, next_ctx, true]
+            else:
+              [new_value, new_end, false]
+        else:
+          [token, next_ctx] = handle_end(value, start, end, ctx)
+          [token, next_ctx, true]
+
+    find:: fn [a, b, done]:
+      done
+
+  [foo, next_ctx]
+
+
+init_tokenizer = fn code:
+  {
+    code,
+    partials: {},
+    separators: {},
+    partial_token: {
+      value: '',
+      loc: {
+        start: {pos: 0, line: 1, column: 0},
+        end: {pos: 0, line: 1, column: 0}
+      }
+    }
+  }
+
+
+add_token = fn value, is_sep=true: fn {partials, separators, ...ctx}:
+  next_partials = match true:
+    is_sep: {...partials, ...get_partials(value)}
+    else: partials
+
+  next_seperators = match true:
+    is_sep: {...separators, (value): true}
+    else: separators
+
+  {...ctx, partials: next_partials, separators: next_seperators}
+

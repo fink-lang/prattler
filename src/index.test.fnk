@@ -1,0 +1,230 @@
+{describe, it, eq, is} = import './testing'
+
+{init_parser, start_parser} = import '.'
+{curr_is, curr_value, curr_loc} = import '.'
+{next_is, next_is_end, next_matches, next_loc} = import '.'
+{assert_curr, assert_next, assert_advance} = import '.'
+{expression, collect_text} = import '.'
+
+{add_non_binding, add_operator_like, add_whitespace} = import './symbols'
+{add_non_separating} = import './symbols'
+{symbol, other_token} = import './symbols'
+
+{end_token} = import './tokenizer'
+
+
+other = fn:
+  nud = fn: fn ctx:
+    [{type: other_token, value: ctx.curr_token.value}, ctx]
+
+  {...symbol(other_token), nud}
+
+
+infix = fn op:
+  led = fn lbp: fn ctx, left:
+    [right, next_ctx] = expression(ctx, lbp)
+    [{type: 'infx', op, left, right}, next_ctx]
+
+  {...symbol(op), led}
+
+
+string = fn op:
+  nud = fn: fn ctx:
+    [txt, next_ctx] = collect_text(ctx, op)
+    [{type: 'string', op, value: txt.text}, next_ctx]
+
+  {...symbol(op), nud}
+
+
+init_test_lang = fn ctx:
+  pipe ctx:
+    add_whitespace(' ')
+    add_whitespace('\n')
+
+    add_non_binding(symbol(';'))
+
+    add_non_separating(other())
+
+    add_operator_like(string(`'`))
+
+    add_operator_like(infix('='))
+
+
+parse = fn code:
+  ctx = pipe {code}:
+    init_parser
+    init_test_lang
+    start_parser
+
+  expression(ctx, 0)
+
+
+describe:: 'parser', fn:
+  it:: 'parses simple expression', fn:
+    [ast, ctx] = parse(`
+      foobar = 123
+    `)
+
+    ast eq {
+      type: 'infx',
+      op: '=',
+      left: {
+        type: other_token,
+        value: 'foobar'
+      },
+      right: {
+        type: other_token,
+        value: '123'
+      }
+    }
+
+    next_is_end(ctx) is true
+
+
+  it:: 'parses string collecting text to end of string', fn:
+    [ast, ctx] = parse(`
+      ' foobar = 123 '
+    `)
+
+    ast eq {
+      type: 'string',
+      op: `'`,
+      value: ' foobar = 123 '
+    }
+    next_is_end(ctx) is true
+
+
+describe:: 'curr token tests, values, and assertions', fn:
+  it:: 'checks if current token value is same as expected', fn:
+    [, ctx] = parse(`foobar = 123`)
+
+    curr_is(ctx, '123') is true
+
+
+  it:: 'checks if  current token value', fn:
+    [, ctx] = parse(`foobar = 123`)
+
+    curr_value(ctx) is '123'
+
+
+  it:: 'gets current token loc', fn:
+    [, ctx] = parse(`foobar = 123`)
+
+    curr_loc(ctx) eq {
+      start: {column: 9, line: 1, pos: 9},
+      end: {column: 12, line: 1, pos: 12}
+    }
+
+
+  it:: 'handles token value assertions for current token', fn:
+    [, ctx] = parse(`foobar = 123`)
+
+    expect(fn: assert_curr(ctx, '123')).not.toThrow()
+    expect(fn: assert_curr(ctx, 'foobar')).toThrow(`
+      Expected 'foobar' but found '123':
+      1| foobar = 123
+                  ^`)
+
+
+describe:: 'next token tests and assertions', fn:
+  it:: 'checks if next token value is same as expected', fn:
+    [, ctx] = parse(`foobar = 123;`)
+
+    next_is(ctx, ';') is true
+
+
+  it:: 'checks if next token matches', fn:
+    [, ctx] = parse(`foobar = 123;`)
+
+    next_matches(ctx, rx/;/) is true
+
+
+  it:: 'gets next token loc', fn:
+    [, ctx] = parse(`foobar = 123`)
+
+    next_loc(ctx) eq {
+      start: {column: 12, line: 1, pos: 12},
+      end: {column: 12, line: 1, pos: 12}
+    }
+
+
+  it:: 'handles token value assertions for next token', fn:
+    [, ctx] = parse(`foobar = 123`)
+
+    expect(fn: assert_next(ctx, end_token)).not.toThrow()
+    expect(fn: assert_next(ctx, '123')).toThrow(`
+      Expected '123' but found Symbol(end):
+      1| foobar = 123
+                     ^`
+    )
+
+
+describe:: 'advance to next token or throw', fn:
+
+  it:: 'advances to the next token if next token value is as expected', fn:
+    [, ctx] = parse(`foobar = 123; shrub = ni`)
+
+    next_ctx = assert_advance(ctx, ';')
+
+    next_is(next_ctx, 'shrub') is true
+
+
+  it:: 'throws when next token value is unexpected', fn:
+    [, ctx] = parse(`foobar = 123; shrub = ni`)
+
+    expect(fn: assert_advance(ctx, '==')).toThrow(`
+      Expected '==' but found ';':
+      1| foobar = 123; shrub = ni
+                     ^`
+    )
+
+
+describe:: 'parse exceptions', fn:
+  it:: 'throws unexpected end of code', fn:
+    test_parse = fn: parse(`
+      foobar =
+    `)
+
+    expect(test_parse).toThrow(`
+      Unexpected end of code:
+      1| foobar =
+                ^`
+    )
+
+
+  it:: 'throws unexpected infix', fn:
+    test_parse = fn: parse(`
+      = 123`
+    )
+
+    expect(test_parse).toThrow(`
+      Cannot use '123' as an infix operator:
+      1| = 123
+           ^`
+    )
+
+
+  it:: 'throws non infix operator', fn:
+    test_parse = fn: parse(`
+      foo = spam ni
+    `)
+
+    expect(test_parse).toThrow(`
+      Cannot use 'ni' as an infix operator:
+      1| foo = spam ni
+                    ^
+      2| `
+    )
+
+
+  it:: 'throws collecting text when not finding expected end', fn:
+    test_parse = fn: parse(`
+      'foo bar`
+    )
+
+    expect(test_parse).toThrow(`
+      Unexpected end of code:
+      1| 'foo bar
+              ^`
+    )
+

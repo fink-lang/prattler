@@ -24,7 +24,11 @@ next_is = fn {next_token}, expected:
 
 next_matches = fn {next_token}, regex:
   # TODO string check, could be a symbol
-  next_token.value.constructor == String && next_token.value.match(regex)
+  (
+    next_token.value.constructor == String
+    && next_token.value.match(regex)
+    && true
+  )
 
 
 next_is_end = fn ctx, expected_end:
@@ -38,7 +42,7 @@ next_loc = fn {next_token}:
 assert_token = fn token, expected, ctx:
   match true:
     token.value != expected:
-      throw:: token_error(
+      throw token_error(
         `Expected ${inspect(expected)} but found ${inspect(token.value)}:`,
         token, ctx
       )
@@ -59,7 +63,7 @@ assert_curr = fn ctx, expected:
 assert_not_end = fn ctx:
   match true:
     next_is_end(ctx):
-      throw:: token_error(`Unexpected end of code:`, ctx.curr_token, ctx)
+      throw token_error(`Unexpected end of code:`, ctx.curr_token, ctx)
       # TODO
       null
 

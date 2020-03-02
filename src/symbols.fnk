@@ -103,7 +103,7 @@ led = fn ctx, left:
 
   match !led_fn:
     true:
-      throw:: token_error(
+      throw token_error(
         `Cannot use ${inspect(curr_token.value)} as an infix operator:`,
         curr_token, ctx
       )

@@ -1,0 +1,14 @@
+{describe, it, is} = import './testing'
+
+{find} = import './iter'
+
+
+describe:: find, fn:
+
+  it:: 'finds elemens', fn:
+
+    foo = pipe '123456':
+      find:: fn item: item == '3'
+
+    foo is '3'
+

@@ -1,5 +1,4 @@
 {obj_has} = import './obj'
-{find} = import './iter'
 
 end_token = Symbol('end')
 
@@ -64,7 +63,7 @@ get_next_token = fn ctx:
           [token, next_ctx] = handle_end(value, start, end, ctx)
           [token, next_ctx, true]
 
-    find:: fn [a, b, done]:
+    find [a, b, done]:
       done
 
   [foo, next_ctx]

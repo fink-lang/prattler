@@ -3,7 +3,6 @@
 {init_tokenizer, end_token, get_next_token} = import './tokenizer'
 {init_symbols, ignorable, next_lbp, led, nud} = import './symbols'
 {token_error} = import './errors'
-{find} = import './iter'
 
 
 curr_is = fn {curr_token}, expected:
@@ -77,7 +76,7 @@ advance = fn ctx:
         else:
           [next_token, ignored, next_tokenizer]
 
-    find:: fn [token]:
+    find [token]:
       token != null
 
   {...ctx, tokenizer, curr_token, next_token, ignored_tokens}
@@ -114,7 +113,8 @@ collect_text = fn ctx, ...stop_token_values:
         else:
           [curr_token, token, text, tokenizer, end, true]
 
-    find:: fn [,,,,,found]: found
+    find [,,,,,found]:
+      found
 
   next_ctx = {...ctx, tokenizer, curr_token, next_token, ignored_tokens: []}
   assert_not_end(next_ctx)
@@ -137,7 +137,8 @@ expression = fn ctx, rbp:
         else:
           [left, ctx, true]
 
-    find:: fn [,,found]: found
+    find [,,found]:
+      found
 
   [left, next_ctx]
 

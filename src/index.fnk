@@ -42,7 +42,7 @@ assert_token = fn token, expected, ctx:
   match true:
     token.value != expected:
       throw token_error(
-        `Expected ${inspect(expected)} but found ${inspect(token.value)}:`,
+        `Expected ${inspect(expected)} but found ${inspect(token.value)}.`,
         token, ctx
       )
 
@@ -60,7 +60,7 @@ assert_curr = fn ctx, expected:
 assert_not_end = fn ctx:
   match true:
     next_is_end(ctx):
-      throw token_error(`Unexpected end of code:`, ctx.curr_token, ctx)
+      throw token_error(`Unexpected end of code.`, ctx.curr_token, ctx)
 
 
 advance = fn ctx:
@@ -143,7 +143,7 @@ expression = fn ctx, rbp:
   [left, next_ctx]
 
 
-init_parser = fn {code}:
+init_parser = fn {code, filename}:
   {
     curr_token: null,
     next_token: {
@@ -154,7 +154,7 @@ init_parser = fn {code}:
     },
     ignored_tokens: [],
 
-    tokenizer: init_tokenizer(code),
+    tokenizer: init_tokenizer(code, filename),
     symbols: init_symbols()
   }
 

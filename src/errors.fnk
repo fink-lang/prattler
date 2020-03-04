@@ -1,10 +1,16 @@
 {highlight_code_loc} = import '@fink/snippet'
 
 
+token_error = fn msg, token, {tokenizer: {code, filename}}:
+  {loc} = token
+  {start: {line, column}} = loc
 
-token_error = fn msg, token, {tokenizer: {code}}:
-  snippet = highlight_code_loc(code, token.loc)
+  snippet = `
+    ${filename}:${line}:${column}
+    ${highlight_code_loc(code, loc)}
+
+    ${msg}
+  `
+
   # TODO: remove first line of err.stack
-  new Error(`${msg}\n${snippet}`)
-
-
+  new SyntaxError(snippet)

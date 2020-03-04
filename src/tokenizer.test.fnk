@@ -6,7 +6,7 @@
 
 describe:: 'tokenizer', fn:
   tokenize = fn code:
-    ctx = pipe init_tokenizer(code):
+    ctx = pipe init_tokenizer(code, 'test.fnk'):
       add_token(' ')
       add_token('\n')
       add_token('=')

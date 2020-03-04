@@ -51,7 +51,7 @@ init_test_lang = fn ctx:
 
 
 parse = fn code:
-  ctx = pipe {code}:
+  ctx = pipe {code, filename: 'test.fnk'}:
     init_parser
     init_test_lang
     start_parser
@@ -121,9 +121,12 @@ describe:: 'curr token tests, values, and assertions', fn:
 
     (fn: assert_curr(ctx, '123')) not_to_throw anything
     (fn: assert_curr(ctx, 'foobar')) to_throw `
-      Expected 'foobar' but found '123':
+      test.fnk:1:9
       1| foobar = 123
-                  ^`
+                  ^
+
+      Expected 'foobar' but found '123'.
+    `
 
 
 describe:: 'next token tests and assertions', fn:
@@ -154,9 +157,12 @@ describe:: 'next token tests and assertions', fn:
     (fn: assert_next(ctx, end_token)) not_to_throw anything
 
     (fn: assert_next(ctx, '123')) to_throw `
-      Expected '123' but found Symbol(end):
+      test.fnk:1:12
       1| foobar = 123
-                     ^`
+                     ^
+
+      Expected '123' but found Symbol(end).
+    `
 
 
 describe:: 'advance to next token or throw', fn:
@@ -173,52 +179,59 @@ describe:: 'advance to next token or throw', fn:
     [, ctx] = parse(`foobar = 123; shrub = ni`)
 
     (fn: assert_advance(ctx, '==')) to_throw `
-      Expected '==' but found ';':
+      test.fnk:1:12
       1| foobar = 123; shrub = ni
-                     ^`
+                     ^
+
+      Expected '==' but found ';'.
+    `
 
 
 describe:: 'parse exceptions', fn:
   it:: 'throws unexpected end of code', fn:
-    test_parse = fn: parse(`
-      foobar =
-    `)
+    test_parse = fn: parse(`foobar =`)
 
     test_parse to_throw `
-      Unexpected end of code:
+      test.fnk:1:7
       1| foobar =
-                ^`
+                ^
+
+      Unexpected end of code.
+    `
 
 
   it:: 'throws unexpected infix', fn:
-    test_parse = fn: parse(`
-      = 123`)
+    test_parse = fn: parse(`= 123`)
 
     test_parse to_throw `
-      Cannot use '123' as an infix operator:
+      test.fnk:1:2
       1| = 123
-           ^`
+           ^
+
+      Cannot use '123' as an infix operator.
+    `
 
 
   it:: 'throws non infix operator', fn:
-    test_parse = fn: parse(`
-      foo = spam ni
-    `)
+    test_parse = fn: parse(`foo = spam ni`)
 
     test_parse to_throw `
-      Cannot use 'ni' as an infix operator:
+      test.fnk:1:11
       1| foo = spam ni
                     ^
-      2| `
+
+      Cannot use 'ni' as an infix operator.
+    `
 
 
   it:: 'throws collecting text when not finding expected end', fn:
-    test_parse = fn: parse(`
-      'foo bar`
-    )
+    test_parse = fn: parse(`'foo bar`)
 
     test_parse to_throw `
-      Unexpected end of code:
+      test.fnk:1:5
       1| 'foo bar
-              ^`
+              ^
+
+      Unexpected end of code.
+    `
 

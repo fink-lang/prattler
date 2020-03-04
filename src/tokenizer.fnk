@@ -69,9 +69,10 @@ get_next_token = fn ctx:
   [foo, next_ctx]
 
 
-init_tokenizer = fn code:
+init_tokenizer = fn code, filename:
   {
     code,
+    filename,
     partials: {},
     separators: {},
     partial_token: {

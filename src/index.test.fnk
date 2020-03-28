@@ -31,7 +31,7 @@ infix = fn op:
 string = fn op:
   nud = fn: fn ctx:
     [txt, next_ctx] = collect_text(ctx, op)
-    [{type: 'string', op, value: txt.text}, next_ctx]
+    [{type: 'string', op, value: txt.value}, next_ctx]
 
   {...symbol(op), nud}
 
@@ -192,9 +192,9 @@ describe:: 'parse exceptions', fn:
     test_parse = fn: parse(`foobar =`)
 
     test_parse to_throw `
-      test.fnk:1:7
+      test.fnk:1:8
       1| foobar =
-                ^
+                 ^
 
       Unexpected end of code.
     `
@@ -228,9 +228,9 @@ describe:: 'parse exceptions', fn:
     test_parse = fn: parse(`'foo bar`)
 
     test_parse to_throw `
-      test.fnk:1:5
+      test.fnk:1:8
       1| 'foo bar
-              ^
+                 ^
 
       Unexpected end of code.
     `

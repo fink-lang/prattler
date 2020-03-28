@@ -35,6 +35,30 @@ handle_end = fn value, start, end, ctx:
 {log} = console
 
 
+get_text = fn ctx, start, stop_at:
+  {code} = ctx
+
+  search_text = code.slice(start.pos)
+  idx = search_text.search(stop_at)
+
+  text = match idx:
+    -1: search_text.slice(0)
+    else: search_text.slice(0, idx)
+
+  lines = text.split(rx/\n/g)
+
+  line = start.line + lines.length - 1
+  column = match lines.length:
+    1: start.column + text.length
+    else: lines.(lines.length - 1).length
+
+  end = {pos: start.pos + text.length, line, column}
+
+  partial_token = {value: '', loc: {start: end, end}}
+  next_ctx = {...ctx, partial_token}
+  [{value: text, loc: {start, end}}, next_ctx]
+
+
 get_next_token = fn ctx:
   {code, partials, separators, partial_token} = ctx
   {value, loc: {start, end}} = partial_token

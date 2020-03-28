@@ -1,6 +1,6 @@
 {inspect} = import 'util'
 
-{init_tokenizer, end_token, get_next_token} = import './tokenizer'
+{init_tokenizer, end_token, get_next_token, get_text} = import './tokenizer'
 {init_symbols, ignorable, next_lbp, led, nud} = import './symbols'
 {token_error} = import './errors'
 
@@ -60,26 +60,26 @@ assert_curr = fn ctx, expected:
 assert_not_end = fn ctx:
   match true:
     next_is_end(ctx):
-      throw token_error(`Unexpected end of code.`, ctx.curr_token, ctx)
+      throw token_error(`Unexpected end of code.`, ctx.next_token, ctx)
 
 
 advance = fn ctx:
   curr_token = ctx.next_token
 
-  [next_token, ignored_tokens, tokenizer] = pipe [null, [], ctx.tokenizer]:
-    unfold [, ignored, tokenizer]:
+  [next_token, tokenizer] = pipe [null, ctx.tokenizer]:
+    unfold [, tokenizer]:
       # TODO: should it return [tokenizer_ctx, next_token]?
       [next_token, next_tokenizer] = get_next_token(tokenizer)
       match true:
         ignorable(ctx, next_token):
-          [null, [...ignored, next_token], next_tokenizer]
+          [null, next_tokenizer]
         else:
-          [next_token, ignored, next_tokenizer]
+          [next_token, next_tokenizer]
 
     find [token]:
       token != null
 
-  {...ctx, tokenizer, curr_token, next_token, ignored_tokens}
+  {...ctx, tokenizer, curr_token, next_token}
 
 
 assert_advance = fn ctx, expected:
@@ -87,39 +87,17 @@ assert_advance = fn ctx, expected:
   advance(ctx)
 
 
-ignored_text = fn ctx:
-  ctx.ignored_tokens.map(fn {value}: value).join('')
+collect_text = fn ctx, stop_at:
+  {curr_token} = ctx
 
+  [text, next_tokenizer] = get_text:: ctx.tokenizer, curr_token.loc.end, stop_at
+  [next_token, tokenizer] = get_next_token:: next_tokenizer
 
-collect_text = fn ctx, ...stop_token_values:
-  stop_at = [...stop_token_values]
-  {start, end: curr_end} = curr_loc(ctx)
+  next_ctx = {...ctx, tokenizer, curr_token, next_token}
 
-  inital = [
-    ctx.curr_token, ctx.next_token,
-    ignored_text(ctx), ctx.tokenizer,
-    curr_end
-  ]
-
-  [curr_token, next_token, text, tokenizer, end] = pipe inital:
-    unfold [curr_token, token, text, tokenizer, end]:
-      match true:
-        !(token.value == end_token || stop_at.includes(token.value)):
-          next_text = text + token.value
-          [next_token, next_tokenizer] = get_next_token(tokenizer)
-          {end: next_end} = next_token.loc
-
-          [token, next_token, next_text, next_tokenizer, next_end, false]
-        else:
-          [curr_token, token, text, tokenizer, end, true]
-
-    find [,,,,,found]:
-      found
-
-  next_ctx = {...ctx, tokenizer, curr_token, next_token, ignored_tokens: []}
   assert_not_end(next_ctx)
 
-  [{text, loc: {start, end}}, advance(next_ctx)]
+  [text, advance(next_ctx)]
 
 
 expression = fn ctx, rbp:
@@ -152,7 +130,6 @@ init_parser = fn {code, filename}:
         end: {pos: 0, line: 1, column: 0}
       }
     },
-    ignored_tokens: [],
 
     tokenizer: init_tokenizer(code, filename),
     symbols: init_symbols()

@@ -5,8 +5,8 @@
 {obj_has} = import './obj'
 
 
-other_token = Symbol('other')
-auto = Symbol('auto')
+other_token = Symbol:: 'other'
+auto = Symbol:: 'auto'
 
 
 symbol = fn id: {
@@ -30,22 +30,25 @@ add_symbol = fn symb, lbp, is_sep: fn {symbols, tokenizer, ...ctx}:
   {next_lbp, lbps, nuds, leds} = symbols
 
   symb_lbp = match true:
-      lbp == auto: next_lbp
-      else: lbp
+    lbp == auto: next_lbp
+    else: lbp
 
-  next_lbps = {...lbps, (symb.id): symb.lbp(symb_lbp)}
+  next_lbps = {...lbps, (symb.id): symb.lbp:: symb_lbp}
 
   next_nuds = match symb.nud || null:
     null: nuds
-    else: {...nuds, (symb.id): symb.nud(symb_lbp)}
+    else: {...nuds, (symb.id): symb.nud:: symb_lbp}
 
   next_leds = match symb.led || null:
     null: leds
-    else: {...leds, (symb.id): symb.led(symb_lbp)}
+    else: {...leds, (symb.id): symb.led:: symb_lbp}
+
+  next_tokenizer = pipe tokenizer:
+    add_token:: symb.id, is_sep
 
   {
     ...ctx,
-    tokenizer: pipe tokenizer: add_token(symb.id, is_sep),
+    tokenizer: next_tokenizer,
     symbols: {
       next_lbp: next_lbp + 2,
       lbps: next_lbps,
@@ -55,67 +58,99 @@ add_symbol = fn symb, lbp, is_sep: fn {symbols, tokenizer, ...ctx}:
   }
 
 
-add_whitespace = fn token_val: fn {tokenizer, igns, ...ctx}: {
-  ...ctx,
-  tokenizer: pipe tokenizer: add_token(token_val, true),
-  igns: {...igns, (token_val): true}
-}
+add_whitespace = fn token_val: fn {tokenizer, igns, ...ctx}:
+  next_tokenizer = pipe tokenizer:
+    add_token:: token_val, true
+
+  {
+    ...ctx,
+    tokenizer: next_tokenizer,
+    igns: {...igns, (token_val): true}
+  }
 
 
-# TODO: rename: add_separator
-add_non_binding = fn symb: add_symbol(symb, 0, true)
+add_separator = fn symb: add_symbol:: symb, 0, true
 
 
-# TODO: rename: add_operator
-add_operator_like = fn symb: add_symbol(symb, auto, true)
+add_operator = fn symb: add_symbol:: symb, auto, true
 
 
-# TODO: rename: add_itendifier
-add_non_separating = fn symb: add_symbol(symb, auto, false)
+# TODO: keep it or just have add_identifier, add_keyword
+# istanbul ignore next
+add_non_separating = fn symb: add_symbol:: symb, auto, false
+add_identifier = fn symb: add_symbol:: symb, auto, false
+# istanbul ignore next
+add_keyword = fn symb: add_symbol:: symb, auto, false
 
-# TODO: add_literal
+
 # TODO: add_comment
 # TODO: add_keyword
 
 
+curr_is_separator = fn ctx:
+  {curr_token, tokenizer: {separators}} = ctx
+  obj_has:: separators, curr_token.value
+
+
 ignorable = fn ctx, token:
-  match (token && obj_has(ctx.igns, token.value)):
+  match token && obj_has:: ctx.igns, token.value:
     true: true
     else: false
 
 
 nud = fn ctx:
   {curr_token, symbols: {nuds}} = ctx
-  # TODO if it is a known token we should not fallback to other
-  nud_fn = match true:
-    obj_has(nuds, curr_token.value): nuds.(curr_token.value)
-    else: nuds.(other_token)
 
-  nud_fn(ctx)
+  nud_fn = match true:
+    obj_has:: nuds, curr_token.value:
+      nuds.(curr_token.value)
+
+    curr_is_separator:: ctx:
+      throw token_error::
+        `Unexpected token '${curr_token.value}' at start of expression.`
+        curr_token
+        ctx
+      null
+
+    else:
+      nuds.(other_token)
+
+  nud_fn:: ctx
 
 
 led = fn ctx, left:
   {curr_token, symbols: {leds}} = ctx
-  # TODO if it is a known token we should not fallback to other
+
   led_fn = match true:
-    obj_has(leds, curr_token.value): leds.(curr_token.value)
-    else: leds.(other_token)
+    obj_has:: leds, curr_token.value:
+      leds.(curr_token.value)
+
+    curr_is_separator:: ctx:
+      null
+
+    else:
+      leds.(other_token)
 
   match !led_fn:
     true:
-      throw token_error(
-        `Cannot use ${inspect(curr_token.value)} as an infix operator.`,
-        curr_token, ctx
-      )
-    else: led_fn(ctx, left)
+      throw token_error::
+        `Cannot use ${inspect:: curr_token.value} as an infix operator.`
+        curr_token
+        ctx
+
+    else: led_fn:: ctx, left
 
 
 next_lbp = fn ctx, left:
   {next_token, symbols: {lbps}} = ctx
-  # TODO if it is a known token we should not fallback to other
-  lbp_fn = match true:
-    obj_has(lbps, next_token.value): lbps.(next_token.value)
-    else: lbps.(other_token)
 
-  lbp_fn(ctx, left)
+  lbp_fn = match true:
+    obj_has:: lbps, next_token.value:
+      lbps.(next_token.value)
+    else:
+      # any other_token will act like a separators by default
+      # so it is OK to use it as fallback
+      lbps.(other_token)
+
+  lbp_fn:: ctx, left
 

@@ -6,8 +6,8 @@
 {assert_curr, assert_next, assert_advance} = import '.'
 {expression, collect_text} = import '.'
 
-{add_non_binding, add_operator_like, add_whitespace} = import './symbols'
-{add_non_separating} = import './symbols'
+{add_separator, add_operator, add_identifier} = import './symbols'
+{add_whitespace} = import './symbols'
 {symbol, other_token} = import './symbols'
 
 {end_token} = import './tokenizer'
@@ -15,22 +15,31 @@
 
 other = fn:
   nud = fn: fn ctx:
-    [{type: other_token, value: ctx.curr_token.value}, ctx]
+    value = curr_value:: ctx
+    [{type: other_token, value}, ctx]
 
   {...symbol(other_token), nud}
 
 
 infix = fn op:
   led = fn lbp: fn ctx, left:
-    [right, next_ctx] = expression(ctx, lbp)
+    [right, next_ctx] = expression:: ctx, lbp
     [{type: 'infx', op, left, right}, next_ctx]
 
   {...symbol(op), led}
 
 
+prefix = fn op:
+  nud = fn lbp: fn ctx:
+    [right, next_ctx] = expression:: ctx, lbp
+    [{type: 'prefix', op, right}, next_ctx]
+
+  {...symbol(op), nud}
+
+
 string = fn op:
   nud = fn: fn ctx:
-    [txt, next_ctx] = collect_text(ctx, op)
+    [txt, next_ctx] = collect_text:: ctx, op
     [{type: 'string', op, value: txt.value}, next_ctx]
 
   {...symbol(op), nud}
@@ -38,16 +47,19 @@ string = fn op:
 
 init_test_lang = fn ctx:
   pipe ctx:
-    add_whitespace(' ')
-    add_whitespace('\n')
+    add_whitespace:: ' '
+    add_whitespace:: '\n'
 
-    add_non_binding(symbol(';'))
+    add_separator:: symbol:: ';'
 
-    add_non_separating(other())
+    add_identifier:: other()
 
-    add_operator_like(string(`'`))
+    add_operator:: string:: `'`
 
-    add_operator_like(infix('='))
+    add_operator:: infix:: '='
+
+    add_operator:: prefix:: '!'
+
 
 
 parse = fn code:
@@ -56,13 +68,13 @@ parse = fn code:
     init_test_lang
     start_parser
 
-  expression(ctx, 0)
+  expression:: ctx, 0
 
 
 describe:: 'parser', fn:
   it:: 'parses simple expression', fn:
     [ast, ctx] = parse(`
-      foobar = 123
+      foobar = !123
     `)
 
     ast eq {
@@ -73,8 +85,12 @@ describe:: 'parser', fn:
         value: 'foobar'
       },
       right: {
-        type: other_token,
-        value: '123'
+        type: 'prefix',
+        op: '!',
+        right: {
+          type: other_token,
+          value: '123'
+        }
       }
     }
 
@@ -96,54 +112,53 @@ describe:: 'parser', fn:
 
 describe:: 'curr token tests, values, and assertions', fn:
   it:: 'checks if current token value is same as expected', fn:
-    [, ctx] = parse(`foobar = 123`)
+    [, ctx] = parse:: `foobar = 123`
 
     curr_is(ctx, '123') is true
 
 
-  it:: 'checks if  current token value', fn:
-    [, ctx] = parse(`foobar = 123`)
+  it:: 'checks if current token value', fn:
+    [, ctx] = parse:: `foobar = 123`
 
     curr_value(ctx) is '123'
 
 
   it:: 'gets current token loc', fn:
-    [, ctx] = parse(`foobar = 123`)
+    [, ctx] = parse:: `foobar = 123`
 
-    curr_loc(ctx) eq {
+    (curr_loc:: ctx) eq {
       start: {column: 9, line: 1, pos: 9},
       end: {column: 12, line: 1, pos: 12}
     }
 
 
   it:: 'handles token value assertions for current token', fn:
-    [, ctx] = parse(`foobar = 123`)
+    [, ctx] = parse:: `foobar = 123`
 
-    (fn: assert_curr(ctx, '123')) not_to_throw anything
-    (fn: assert_curr(ctx, 'foobar')) to_throw `
+    (fn: assert_curr:: ctx, '123') not_to_throw anything
+    (fn: assert_curr:: ctx, 'foobar') to_throw `
       test.fnk:1:9
       1| foobar = 123
                   ^
 
-      Expected 'foobar' but found '123'.
-    `
+      Expected one of [ 'foobar' ] but found '123'.`
 
 
 describe:: 'next token tests and assertions', fn:
   it:: 'checks if next token value is same as expected', fn:
-    [, ctx] = parse(`foobar = 123;`)
+    [, ctx] = parse:: `foobar = 123;`
 
     next_is(ctx, ';') is true
 
 
   it:: 'checks if next token matches', fn:
-    [, ctx] = parse(`foobar = 123;`)
+    [, ctx] = parse:: `foobar = 123;`
 
     next_matches(ctx, rx/;/) is true
 
 
   it:: 'gets next token loc', fn:
-    [, ctx] = parse(`foobar = 123`)
+    [, ctx] = parse:: `foobar = 123`
 
     next_loc(ctx) eq {
       start: {column: 12, line: 1, pos: 12},
@@ -152,86 +167,91 @@ describe:: 'next token tests and assertions', fn:
 
 
   it:: 'handles token value assertions for next token', fn:
-    [, ctx] = parse(`foobar = 123`)
+    [, ctx] = parse:: `foobar = 123`
 
-    (fn: assert_next(ctx, end_token)) not_to_throw anything
+    (fn: assert_next:: ctx, end_token) not_to_throw anything
 
-    (fn: assert_next(ctx, '123')) to_throw `
+    (fn: assert_next:: ctx, '123') to_throw `
       test.fnk:1:12
       1| foobar = 123
                      ^
 
-      Expected '123' but found Symbol(end).
-    `
+      Expected one of [ '123' ] but found Symbol(end).`
 
 
 describe:: 'advance to next token or throw', fn:
 
   it:: 'advances to the next token if next token value is as expected', fn:
-    [, ctx] = parse(`foobar = 123; shrub = ni`)
+    [, ctx] = parse:: `foobar = 123; shrub = ni`
 
-    next_ctx = assert_advance(ctx, ';')
+    next_ctx = assert_advance:: ctx, ';'
 
     next_is(next_ctx, 'shrub') is true
 
 
   it:: 'throws when next token value is unexpected', fn:
-    [, ctx] = parse(`foobar = 123; shrub = ni`)
+    [, ctx] = parse:: `foobar = 123; shrub = ni`
 
-    (fn: assert_advance(ctx, '==')) to_throw `
+    (fn: assert_advance:: ctx, '==') to_throw `
       test.fnk:1:12
       1| foobar = 123; shrub = ni
                      ^
 
-      Expected '==' but found ';'.
-    `
+      Expected one of [ '==' ] but found ';'.`
 
 
 describe:: 'parse exceptions', fn:
   it:: 'throws unexpected end of code', fn:
-    test_parse = fn: parse(`foobar =`)
+    test_parse = fn: parse:: `foobar =`
 
     test_parse to_throw `
       test.fnk:1:8
       1| foobar =
                  ^
 
-      Unexpected end of code.
-    `
+      Unexpected end of code.`
 
 
   it:: 'throws unexpected infix', fn:
-    test_parse = fn: parse(`= 123`)
+    test_parse = fn: parse:: `= 123`
 
     test_parse to_throw `
-      test.fnk:1:2
+      test.fnk:1:0
       1| = 123
-           ^
+         ^
 
-      Cannot use '123' as an infix operator.
-    `
+      Unexpected token '=' at start of expression.`
 
 
-  it:: 'throws non infix operator', fn:
-    test_parse = fn: parse(`foo = spam ni`)
+  it:: 'throws using prefix operator as infix operator', fn:
+    test_parse = fn: parse:: `foo ! ni`
+
+    test_parse to_throw `
+      test.fnk:1:4
+      1| foo ! ni
+             ^
+
+      Cannot use '!' as an infix operator.`
+
+
+  it:: 'throws using other as infix operator', fn:
+    test_parse = fn: parse:: `foo = spam ni`
 
     test_parse to_throw `
       test.fnk:1:11
       1| foo = spam ni
                     ^
 
-      Cannot use 'ni' as an infix operator.
-    `
+      Cannot use 'ni' as an infix operator.`
 
 
   it:: 'throws collecting text when not finding expected end', fn:
-    test_parse = fn: parse(`'foo bar`)
+    test_parse = fn: parse:: `'foo bar`
 
     test_parse to_throw `
       test.fnk:1:8
       1| 'foo bar
                  ^
 
-      Unexpected end of code.
-    `
+      Unexpected end of code.`
 

@@ -1,272 +1,297 @@
-{describe, it, is, eq} = import './testing'
+{describe, it, expect, to_equal} = import './testing'
 
 {init_tokenizer, add_token} = import './tokenizer'
 {end_token, get_next_token, get_text} = import './tokenizer'
 
 
+expect_next_to_equal = fn expected:
+  fn ctx:
+    [next_token, next_ctx] = get_next_token:: ctx
+
+    expect::
+      next_token
+      to_equal:: expected
+
+    next_ctx
+
+
+tokenize = fn code:
+  ctx = pipe init_tokenizer:: code, 'test.fnk':
+    add_token:: ' '
+    add_token:: '\n'
+    add_token:: '='
+    add_token:: '!='
+    add_token:: '`'
+    add_token:: 'ni', false
+  ctx
+
+
 describe:: 'tokenizer', fn:
-  init_tokens = fn code:
-    ctx = pipe init_tokenizer(code, 'test.fnk'):
-      add_token(' ')
-      add_token('\n')
-      add_token('=')
-      add_token('!=')
-      add_token('`')
-      add_token('ni', false)
-    ctx
-
-
-  tokenize = fn code:
-    ctx = init_tokens(code)
-
-    tokens = pipe [null, ctx]:
-      unfold [token, ctx]:
-        [next_token, next_ctx] = get_next_token(ctx)
-        [next_token, next_ctx]
-
-    fn:
-      {value , done} = tokens.next()
-      [token] = value
-      token
-
-
   it:: 'tokenizes single line', fn:
-    next_token = tokenize('foo = 1234')
+    pipe tokenize:: 'foo = 1234':
+      expect_next_to_equal::
+        {
+          value: 'foo',
+          loc: {
+            start: {pos: 0, line: 1, column: 0},
+            end: {pos: 3, line: 1, column: 3}
+          }
+        }
 
-    next_token() eq {
-      value: 'foo',
-      loc: {
-        start: {pos: 0, line: 1, column: 0},
-        end: {pos: 3, line: 1, column: 3}
-      }
-    }
+      expect_next_to_equal::
+        {
+          value: ' ',
+          loc: {
+            start: {pos: 3, line: 1, column: 3},
+            end: {pos: 4, line: 1, column: 4}
+          }
+        }
 
-    next_token() eq {
-      value: ' ',
-      loc: {
-        start: {pos: 3, line: 1, column: 3},
-        end: {pos: 4, line: 1, column: 4}
-      }
-    }
+      expect_next_to_equal::
+        {
+          value: '=',
+          loc: {
+            start: {pos: 4, line: 1, column: 4},
+            end: {pos: 5, line: 1, column: 5}
+          }
+        }
 
-    next_token() eq {
-      value: '=',
-      loc: {
-        start: {pos: 4, line: 1, column: 4},
-        end: {pos: 5, line: 1, column: 5}
-      }
-    }
+      expect_next_to_equal::
+        {
+          value: ' ',
+          loc: {
+            start: {pos: 5, line: 1, column: 5},
+            end: {pos: 6, line: 1, column: 6}
+          }
+        }
 
-    next_token() eq {
-      value: ' ',
-      loc: {
-        start: {pos: 5, line: 1, column: 5},
-        end: {pos: 6, line: 1, column: 6}
-      }
-    }
+      expect_next_to_equal::
+        {
+          value: '1234',
+          loc: {
+            start: {pos: 6, line: 1, column: 6},
+            end: {pos: 10, line: 1, column: 10}
+          }
+        }
 
-    next_token() eq {
-      value: '1234',
-      loc: {
-        start: {pos: 6, line: 1, column: 6},
-        end: {pos: 10, line: 1, column: 10}
-      }
-    }
+      expect_next_to_equal::
+        {
+          value: end_token,
+          loc: {
+            start: {pos: 10, line: 1, column: 10},
+            end: {pos: 10, line: 1, column: 10}
+          }
+        }
 
-    next_token() eq {
-      value: end_token,
-      loc: {
-        start: {pos: 10, line: 1, column: 10},
-        end: {pos: 10, line: 1, column: 10}
-      }
-    }
 
 
   it:: 'tokenizes multiple lines', fn:
-    next_token = tokenize('foo\n 1234')
+    pipe tokenize:: 'foo\n 1234':
+      expect_next_to_equal::
+        {
+          value: 'foo',
+          loc: {
+            start: {pos: 0, line: 1, column: 0},
+            end: {pos: 3, line: 1, column: 3}
+          }
+        }
 
-    next_token() eq {
-      value: 'foo',
-      loc: {
-        start: {pos: 0, line: 1, column: 0},
-        end: {pos: 3, line: 1, column: 3}
-      }
-    }
+      expect_next_to_equal::
+        {
+          value: '\n',
+          loc: {
+            start: {pos: 3, line: 1, column: 3},
+            end: {pos: 4, line: 2, column: 0}
+          }
+        }
 
-    next_token() eq {
-      value: '\n',
-      loc: {
-        start: {pos: 3, line: 1, column: 3},
-        end: {pos: 4, line: 2, column: 0}
-      }
-    }
+      expect_next_to_equal::
+        {
+          value: ' ',
+          loc: {
+            start: {pos: 4, line: 2, column: 0},
+            end: {pos: 5, line: 2, column: 1}
+          }
+        }
 
-    next_token() eq {
-      value: ' ',
-      loc: {
-        start: {pos: 4, line: 2, column: 0},
-        end: {pos: 5, line: 2, column: 1}
-      }
-    }
+      expect_next_to_equal::
+        {
+          value: '1234',
+          loc: {
+            start: {pos: 5, line: 2, column: 1},
+            end: {pos: 9, line: 2, column: 5}
+          }
+        }
 
-    next_token() eq {
-      value: '1234',
-      loc: {
-        start: {pos: 5, line: 2, column: 1},
-        end: {pos: 9, line: 2, column: 5}
-      }
-    }
-
-    next_token() eq {
-      value: end_token,
-      loc: {
-        start: {pos: 9, line: 2, column: 5},
-        end: {pos: 9, line: 2, column: 5}
-      }
-    }
+      expect_next_to_equal::
+        {
+          value: end_token,
+          loc: {
+            start: {pos: 9, line: 2, column: 5},
+            end: {pos: 9, line: 2, column: 5}
+          }
+        }
 
 
   it:: 'tokenizes separating multi-char symbols', fn:
-    next_token = tokenize('ni =!= 123')
+    pipe tokenize:: 'ni =!= 123':
+      expect_next_to_equal::
+        {
+          value: 'ni',
+          loc: {
+            start: {pos: 0, line: 1, column: 0},
+            end: {pos: 2, line: 1, column: 2}
+          }
+        }
 
-    next_token() eq {
-      value: 'ni',
-      loc: {
-        start: {pos: 0, line: 1, column: 0},
-        end: {pos: 2, line: 1, column: 2}
-      }
-    }
+      expect_next_to_equal::
+        {
+          value: ' ',
+          loc: {
+            start: {pos: 2, line: 1, column: 2},
+            end: {pos: 3, line: 1, column: 3}
+          }
+        }
 
-    next_token() eq {
-      value: ' ',
-      loc: {
-        start: {pos: 2, line: 1, column: 2},
-        end: {pos: 3, line: 1, column: 3}
-      }
-    }
+      expect_next_to_equal::
+        {
+          value: '=',
+          loc: {
+            start: {pos: 3, line: 1, column: 3},
+            end: {pos: 4, line: 1, column: 4}
+          }
+        }
 
-    next_token() eq {
-      value: '=',
-      loc: {
-        start: {pos: 3, line: 1, column: 3},
-        end: {pos: 4, line: 1, column: 4}
-      }
-    }
+      expect_next_to_equal::
+        {
+          value: '!=',
+          loc: {
+            start: {pos: 4, line: 1, column: 4},
+            end: {pos: 6, line: 1, column: 6}
+          }
+        }
 
-    next_token() eq {
-      value: '!=',
-      loc: {
-        start: {pos: 4, line: 1, column: 4},
-        end: {pos: 6, line: 1, column: 6}
-      }
-    }
+      expect_next_to_equal::
+        {
+          value: ' ',
+          loc: {
+            start: {pos: 6, line: 1, column: 6},
+            end: {pos: 7, line: 1, column: 7}
+          }
+        }
 
-    next_token() eq {
-      value: ' ',
-      loc: {
-        start: {pos: 6, line: 1, column: 6},
-        end: {pos: 7, line: 1, column: 7}
-      }
-    }
+      expect_next_to_equal::
+        {
+          value: '123',
+          loc: {
+            start: {pos: 7, line: 1, column: 7},
+            end: {pos: 10, line: 1, column: 10}
+          }
+        }
 
-    next_token() eq {
-      value: '123',
-      loc: {
-        start: {pos: 7, line: 1, column: 7},
-        end: {pos: 10, line: 1, column: 10}
-      }
-    }
-
-    next_token() eq {
-      value: end_token,
-      loc: {
-        start: {pos: 10, line: 1, column: 10},
-        end: {pos: 10, line: 1, column: 10}
-      }
-    }
+      expect_next_to_equal::
+        {
+          value: end_token,
+          loc: {
+            start: {pos: 10, line: 1, column: 10},
+            end: {pos: 10, line: 1, column: 10}
+          }
+        }
 
 
   it:: 'tokenizes non-separating multi-char symbols', fn:
-    next_token = tokenize('ni nini')
+    pipe tokenize:: 'ni nini':
+      expect_next_to_equal::
+        {
+          value: 'ni',
+          loc: {
+            start: {pos: 0, line: 1, column: 0},
+            end: {pos: 2, line: 1, column: 2}
+          }
+        }
 
-    next_token() eq {
-      value: 'ni',
-      loc: {
-        start: {pos: 0, line: 1, column: 0},
-        end: {pos: 2, line: 1, column: 2}
-      }
-    }
+      expect_next_to_equal::
+        {
+          value: ' ',
+          loc: {
+            start: {pos: 2, line: 1, column: 2},
+            end: {pos: 3, line: 1, column: 3}
+          }
+        }
 
-    next_token() eq {
-      value: ' ',
-      loc: {
-        start: {pos: 2, line: 1, column: 2},
-        end: {pos: 3, line: 1, column: 3}
-      }
-    }
+      expect_next_to_equal::
+        {
+          value: 'nini',
+          loc: {
+            start: {pos: 3, line: 1, column: 3},
+            end: {pos: 7, line: 1, column: 7}
+          }
+        }
 
-    next_token() eq {
-      value: 'nini',
-      loc: {
-        start: {pos: 3, line: 1, column: 3},
-        end: {pos: 7, line: 1, column: 7}
-      }
-    }
-
-    next_token() eq {
-      value: end_token,
-      loc: {
-        start: {pos: 7, line: 1, column: 7},
-        end: {pos: 7, line: 1, column: 7}
-      }
-    }
+      expect_next_to_equal::
+        {
+          value: end_token,
+          loc: {
+            start: {pos: 7, line: 1, column: 7},
+            end: {pos: 7, line: 1, column: 7}
+          }
+        }
 
 
   it:: 'handles empty code', fn:
-    next_token = tokenize('')
-
-    next_token() eq {
-      value: end_token,
-      loc: {
-        start: {pos: 0, line: 1, column: 0},
-        end: {pos: 0, line: 1, column: 0}
-      }
-    }
+    pipe tokenize:: '':
+      expect_next_to_equal::
+        {
+          value: end_token,
+          loc: {
+            start: {pos: 0, line: 1, column: 0},
+            end: {pos: 0, line: 1, column: 0}
+          }
+        }
 
 
   it:: 'gets text after token', fn:
-    ctx = init_tokens('
-      `
-        foo
-        bar = spam
-      `
-    ')
+    ctx = tokenize:: '
+        `
+          foo
+          bar = spam
+        `
+      '
 
     [start_tkn, text_ctx] = get_next_token:: ctx
     [txt, end_ctx] = get_text:: text_ctx , start_tkn.loc.end, rx/`/
     [end_token, next_ctx] = get_next_token:: end_ctx
 
-    start_tkn eq {
-      value: '`',
-      loc: {
-        start: {pos: 0, line: 1, column: 0},
-        end: {pos: 1, line: 1, column: 1}
-      }
-    }
+    expect::
+      start_tkn
+      to_equal::
+        {
+          value: '`',
+          loc: {
+            start: {pos: 0, line: 1, column: 0},
+            end: {pos: 1, line: 1, column: 1}
+          }
+        }
 
-    txt eq {
-      value: '\n  foo\n  bar = spam\n',
-      loc: {
-        start: {pos: 1, line: 1, column: 1},
-        end: {pos: 21, line: 4, column: 0}
-      }
-    }
+    expect::
+      txt
+      to_equal::
+        {
+          value: '\n  foo\n  bar = spam\n',
+          loc: {
+            start: {pos: 1, line: 1, column: 1},
+            end: {pos: 21, line: 4, column: 0}
+          }
+        }
 
-    end_token eq {
-      value: '`',
-      loc: {
-        start: {pos: 21, line: 4, column: 0},
-        end: {pos: 22, line: 4, column: 1}
-      }
-    }
+    expect::
+      end_token
+      to_equal::
+        {
+          value: '`',
+          loc: {
+            start: {pos: 21, line: 4, column: 0},
+            end: {pos: 22, line: 4, column: 1}
+          }
+        }
 

@@ -1,12 +1,16 @@
 {obj_has} = import './obj'
 
-end_token = Symbol('end')
+end_token = Symbol:: 'end'
 
 
 get_partials = fn [start, ...rest], pre='':
-  match rest.length:
-    0: {`${pre}${start}`: false}
-    else: {`${pre}${start}`: true, ...get_partials(rest, `${pre}${start}`)}
+  key = `${pre}${start}`
+  match rest:
+    {length: 0}:
+      {(key): false}
+    else:
+      partials = get_partials:: rest, key
+      {(key): true, ...partials}
 
 
 get_loc = fn char, {pos, line, column}:
@@ -17,7 +21,7 @@ get_loc = fn char, {pos, line, column}:
 
 get_next_char = fn code, loc:
   char = code.(loc.pos)
-  new_loc = get_loc(char, loc)
+  new_loc = get_loc:: char, loc
   [char, new_loc]
 
 
@@ -38,14 +42,14 @@ handle_end = fn value, start, end, ctx:
 get_text = fn ctx, start, stop_at:
   {code} = ctx
 
-  search_text = code.slice(start.pos)
-  idx = search_text.search(stop_at)
+  search_text = code.slice:: start.pos
+  idx = search_text.search:: stop_at
 
   text = match idx:
-    -1: search_text.slice(0)
-    else: search_text.slice(0, idx)
+    -1: search_text.slice:: 0
+    else: search_text.slice:: 0, idx
 
-  lines = text.split(rx/\n/g)
+  lines = text.split:: rx/\n/g
 
   line = start.line + lines.length - 1
   column = match lines.length:
@@ -67,13 +71,14 @@ get_next_token = fn ctx:
     unfold [value, end]:
       match true:
         end.pos < code.length:
-          [char, new_end] = get_next_char(code, end)
+          [char, new_end] = get_next_char:: code, end
           new_value = `${value}${char}`
 
-          is_seperator = (
-            obj_has(separators, char) || obj_has(separators, value)
-          )
-          is_partial = obj_has(partials, new_value)
+          is_seperator = match separators:
+            obj_has:: ?, char: true
+            obj_has:: ?, value: true
+
+          is_partial = obj_has:: partials, new_value
 
           match true:
             is_seperator && !is_partial:
@@ -84,7 +89,7 @@ get_next_token = fn ctx:
             else:
               [new_value, new_end, false]
         else:
-          [token, next_ctx] = handle_end(value, start, end, ctx)
+          [token, next_ctx] = handle_end:: value, start, end, ctx
           [token, next_ctx, true]
 
     find [a, b, done]:
@@ -111,7 +116,7 @@ init_tokenizer = fn code, filename:
 
 add_token = fn value, is_sep=true: fn {partials, separators, ...ctx}:
   next_partials = match true:
-    is_sep: {...partials, ...get_partials(value)}
+    is_sep: {...partials, ...get_partials:: value}
     else: partials
 
   next_seperators = match true:

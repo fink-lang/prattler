@@ -1,52 +1,32 @@
-anything = Symbol(`anything`)
-
-snapshot = Symbol(`snapshot`)
+anything = Symbol:: 'anything'
 
 
 describe = fn descr, tests:
-  global.describe(descr, tests)
+  global.describe:: descr, fn:
+    tests()
+    undefined
   undefined
 
 
 it = fn descr, test:
-  global.it(descr, test)
-  undefined
+  global.it:: descr, fn:
+    await test()
+    undefined
 
 
-eq = fn result, expected:
-  expect(result).toEqual(expected)
+expect = fn actual, expectation:
+  expectation:: global.expect:: actual
 
 
-is = fn result, expected:
-  expect(result).toBe(expected)
+to_equal = fn expected: fn expect_actual:
+  expect_actual.toEqual:: expected
 
 
-called_with = fn result, expected:
-  caller = expect(result)
-
+to_throw = fn expected: fn expect_actual:
   match expected:
-    anything: caller.toBeCalled()
-    else: caller.toBeCalledWith(...expected)
+    anything: expect_actual.toThrow()
+    else: expect_actual.toThrow:: expected
 
 
-not_called_with = fn result, expected:
-  caller = expect(result)
-
-  match expected:
-    anything: caller.not.toBeCalled()
-    else: caller.not.toBeCalledWith(...expected)
-
-
-to_throw = fn func, expected:
-  expect(func).toThrow(expected)
-
-
-not_to_throw = fn func:
-  expect(func).not.toThrow()
-
-
-mock_fn = fn ...args:
-  jest.fn(...args)
-
-
-mock = jest.mock
+not = fn expected: fn expect_actual:
+  expected:: expect_actual.not

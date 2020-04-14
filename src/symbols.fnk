@@ -29,8 +29,8 @@ init_symbols = fn: {
 add_symbol = fn symb, lbp, is_sep: fn {symbols, tokenizer, ...ctx}:
   {next_lbp, lbps, nuds, leds} = symbols
 
-  symb_lbp = match true:
-    lbp == auto: next_lbp
+  symb_lbp = match lbp:
+    auto: next_lbp
     else: lbp
 
   next_lbps = {...lbps, (symb.id): symb.lbp:: symb_lbp}
@@ -100,14 +100,15 @@ ignorable = fn ctx, token:
 
 nud = fn ctx:
   {curr_token, symbols: {nuds}} = ctx
+  {value} = curr_token
 
   nud_fn = match true:
-    obj_has:: nuds, curr_token.value:
-      nuds.(curr_token.value)
+    obj_has:: nuds, value:
+      nuds.(value)
 
     curr_is_separator:: ctx:
       throw token_error::
-        `Unexpected token '${curr_token.value}' at start of expression.`
+        `Unexpected token '${value}' at start of expression.`
         curr_token
         ctx
       null
@@ -120,10 +121,11 @@ nud = fn ctx:
 
 led = fn ctx, left:
   {curr_token, symbols: {leds}} = ctx
+  {value} = curr_token
 
   led_fn = match true:
-    obj_has:: leds, curr_token.value:
-      leds.(curr_token.value)
+    obj_has:: leds, value:
+      leds.(value)
 
     curr_is_separator:: ctx:
       null
@@ -134,7 +136,7 @@ led = fn ctx, left:
   match !led_fn:
     true:
       throw token_error::
-        `Cannot use ${inspect:: curr_token.value} as an infix operator.`
+        `Cannot use ${inspect:: value} as an infix operator.`
         curr_token
         ctx
 
@@ -143,10 +145,11 @@ led = fn ctx, left:
 
 next_lbp = fn ctx, left:
   {next_token, symbols: {lbps}} = ctx
+  {value} = next_token
 
   lbp_fn = match true:
-    obj_has:: lbps, next_token.value:
-      lbps.(next_token.value)
+    obj_has:: lbps, value:
+      lbps.(value)
     else:
       # any other_token will act like a separators by default
       # so it is OK to use it as fallback

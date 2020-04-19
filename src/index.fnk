@@ -2,6 +2,7 @@
 
 {init_tokenizer, end_token, get_next_token, get_text} = import './tokenizer'
 {init_symbols, ignorable, next_lbp, led, nud} = import './symbols'
+{obj_has} = import './obj'
 {token_error} = import './errors'
 
 
@@ -104,7 +105,7 @@ collect_text = fn ctx, stop_at:
   [text, next_tokenizer] = get_text:: ctx.tokenizer, curr_token.loc.end, stop_at
   [next_token, tokenizer] = get_next_token:: next_tokenizer
 
-  next_ctx = {...ctx, tokenizer, curr_token, next_token}
+  next_ctx = {...ctx, tokenizer, curr_token: text, next_token}
 
   assert_not_end:: next_ctx
 

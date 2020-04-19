@@ -17,7 +17,6 @@ it = fn descr, test:
 expect = fn actual, expectation:
   expectation:: global.expect:: actual
 
-
 to_equal = fn expected: fn expect_actual:
   expect_actual.toEqual:: expected
 

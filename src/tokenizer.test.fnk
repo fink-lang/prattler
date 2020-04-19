@@ -84,7 +84,6 @@ describe:: 'tokenizer', fn:
         }
 
 
-
   it:: 'tokenizes multiple lines', fn:
     pipe tokenize:: 'foo\n 1234':
       expect_next_to_equal::
@@ -101,7 +100,7 @@ describe:: 'tokenizer', fn:
           value: '\n',
           loc: {
             start: {pos: 3, line: 1, column: 3},
-            end: {pos: 4, line: 2, column: 0}
+            end: {pos: 4, line: 1, column: 4}
           }
         }
 
@@ -260,7 +259,9 @@ describe:: 'tokenizer', fn:
 
     [start_tkn, text_ctx] = get_next_token:: ctx
     [txt, end_ctx] = get_text:: text_ctx , start_tkn.loc.end, rx/`/
-    [end_token, next_ctx] = get_next_token:: end_ctx
+    [end_str_token, next_ctx] = get_next_token:: end_ctx
+    [nl_token, end_end_ctx] = get_next_token:: next_ctx
+    [end_end_token] = get_next_token:: end_end_ctx
 
     expect::
       start_tkn
@@ -285,7 +286,7 @@ describe:: 'tokenizer', fn:
         }
 
     expect::
-      end_token
+      end_str_token
       to_equal::
         {
           value: '`',
@@ -294,4 +295,130 @@ describe:: 'tokenizer', fn:
             end: {pos: 22, line: 4, column: 1}
           }
         }
+
+    expect::
+      nl_token
+      to_equal::
+        {
+          value: '\n',
+          loc: {
+            start: {pos: 22, line: 4, column: 1},
+            end: {pos: 23, line: 4, column: 2}
+          }
+        }
+
+    expect::
+      end_end_token
+      to_equal::
+        {
+          value: end_token,
+          loc: {
+            start: {pos: 23, line: 5, column: 0},
+            end: {pos: 23, line: 5, column: 0}
+          }
+        }
+
+  it:: 'gets empty text after token', fn:
+    ctx = tokenize:: '``'
+    [start_tkn, text_ctx] = get_next_token:: ctx
+    [txt, end_ctx] = get_text:: text_ctx , start_tkn.loc.end, rx/`/
+    [end_str_token, next_ctx] = get_next_token:: end_ctx
+    [end_end_token] = get_next_token:: next_ctx
+
+    expect::
+      start_tkn
+      to_equal::
+        {
+          value: '`',
+          loc: {
+            start: {pos: 0, line: 1, column: 0},
+            end: {pos: 1, line: 1, column: 1}
+          }
+        }
+
+    expect::
+      txt
+      to_equal::
+        {
+          value: '',
+          loc: {
+            start: {pos: 1, line: 1, column: 1},
+            end: {pos: 1, line: 1, column: 1}
+          }
+        }
+
+    expect::
+      end_str_token
+      to_equal::
+        {
+          value: '`',
+          loc: {
+            start: {pos: 1, line: 1, column: 1},
+            end: {pos: 2, line: 1, column: 2}
+          }
+        }
+
+    expect::
+      end_end_token
+      to_equal::
+        {
+          value: end_token,
+          loc: {
+            start: {pos: 2, line: 1, column: 2},
+            end: {pos: 2, line: 1, column: 2}
+          }
+        }
+
+
+  it:: 'gets single line text after token', fn:
+    ctx = tokenize:: '`foobar`'
+    [start_tkn, text_ctx] = get_next_token:: ctx
+    [txt, end_ctx] = get_text:: text_ctx , start_tkn.loc.end, rx/`/
+    [end_str_token, next_ctx] = get_next_token:: end_ctx
+    [end_end_token] = get_next_token:: next_ctx
+
+    expect::
+      start_tkn
+      to_equal::
+        {
+          value: '`',
+          loc: {
+            start: {pos: 0, line: 1, column: 0},
+            end: {pos: 1, line: 1, column: 1}
+          }
+        }
+
+    expect::
+      txt
+      to_equal::
+        {
+          value: 'foobar',
+          loc: {
+            start: {pos: 1, line: 1, column: 1},
+            end: {pos: 7, line: 1, column: 7}
+          }
+        }
+
+    expect::
+      end_str_token
+      to_equal::
+        {
+          value: '`',
+          loc: {
+            start: {pos: 7, line: 1, column: 7},
+            end: {pos: 8, line: 1, column: 8}
+          }
+        }
+
+    expect::
+      end_end_token
+      to_equal::
+        {
+          value: end_token,
+          loc: {
+            start: {pos: 8, line: 1, column: 8},
+            end: {pos: 8, line: 1, column: 8}
+          }
+        }
+
 

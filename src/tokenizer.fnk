@@ -13,16 +13,24 @@ get_partials = fn [start, ...rest], pre='':
       {(key): true, ...partials}
 
 
-get_loc = fn char, {pos, line, column}:
-  match char:
-    '\n': {pos: pos + 1, line: line + 1, column: 0}
-    else: {pos: pos + 1, line, column: column + 1}
+get_next_loc = fn char, prev_char, {pos, line, column}:
+  match prev_char:
+    '\n':
+      start = {pos: pos, line: line + 1, column: 0}
+      end = {pos: pos + 1, line: line + 1, column: 1}
+      {start, end}
+    else:
+      start = {pos: pos, line, column: column}
+      end = {pos: pos + 1, line, column: column + 1}
+      {start, end}
 
 
-get_next_char = fn code, loc:
-  char = code.(loc.pos)
-  new_loc = get_loc:: char, loc
-  [char, new_loc]
+get_next_char = fn code, prev_loc:
+  char = code.(prev_loc.pos)
+  prev_char = code.(prev_loc.pos - 1)
+
+  next_loc = get_next_loc:: char, prev_char, prev_loc
+  [char, next_loc]
 
 
 handle_end = fn value, start, end, ctx:
@@ -31,12 +39,17 @@ handle_end = fn value, start, end, ctx:
       {value: end_token, loc: {start: end, end}},
       {...ctx, partial_token: {value: '', loc: {start, end}}}
     ]
-    else: [
-      {value, loc: {start, end}},
-      {...ctx, partial_token: {value: '', loc: {start, end}}}
-    ]
-
-{log} = console
+    '\n':
+      nend = {pos: end.pos, line: end.line+1, column: 0}
+      [
+        {value, loc: {start, end}},
+        {...ctx, partial_token: {value: '', loc:{start: nend, end: nend}}}
+      ]
+    else:
+      [
+        {value, loc: {start, end}},
+        {...ctx, partial_token: {value: '', loc: {start, end}}}
+      ]
 
 
 get_text = fn ctx, start, stop_at:
@@ -58,20 +71,27 @@ get_text = fn ctx, start, stop_at:
 
   end = {pos: start.pos + text.length, line, column}
 
-  partial_token = {value: '', loc: {start: end, end}}
+  partial_token = match text:
+    ?.endsWith:: '\n':
+      [value, loc] = get_next_char:: code, {...end, line: end.line-1}
+      {value, loc}
+    else:
+      [value, loc] = get_next_char:: code, end
+      {value, loc}
+
   next_ctx = {...ctx, partial_token}
   [{value: text, loc: {start, end}}, next_ctx]
 
 
 get_next_token = fn ctx:
   {code, partials, separators, partial_token} = ctx
-  {value, loc: {start, end}} = partial_token
+  {value: start_val, loc: start_loc} = partial_token
 
-  [foo, next_ctx] = pipe [value, end]:
-    unfold [value, end]:
+  [next_token, next_ctx] = pipe [start_val, start_loc]:
+    unfold [value, value_loc]:
       match true:
-        end.pos < code.length:
-          [char, new_end] = get_next_char:: code, end
+        value_loc.end.pos < code.length:
+          [char, char_loc] = get_next_char:: code, value_loc.end
           new_value = `${value}${char}`
 
           is_seperator = match separators:
@@ -82,26 +102,30 @@ get_next_token = fn ctx:
 
           match true:
             is_seperator && !is_partial:
-              token = {value, loc: {start, end}}
-              partial_token = {value: char, loc: {start: end, end: new_end}}
+              token = {value, loc: {start: value_loc.start, end: value_loc.end}}
+              partial_token = {value: char, loc: char_loc}
+
               next_ctx = {...ctx, partial_token}
               [token, next_ctx, true]
             else:
-              [new_value, new_end, false]
+              ll = {start: value_loc.start, end: char_loc.end}
+              [new_value, ll, false]
         else:
+          {start, end} = value_loc
           [token, next_ctx] = handle_end:: value, start, end, ctx
           [token, next_ctx, true]
 
-    find [a, b, done]:
+    find [, , done]:
       done
 
-  [foo, next_ctx]
+  [next_token, next_ctx]
 
 
 init_tokenizer = fn code, filename:
   {
     code,
     filename,
+    tokens: {},
     partials: {},
     separators: {},
     partial_token: {
@@ -114,7 +138,9 @@ init_tokenizer = fn code, filename:
   }
 
 
-add_token = fn value, is_sep=true: fn {partials, separators, ...ctx}:
+add_token = fn value, is_sep=true: fn {tokens, partials, separators, ...ctx}:
+  next_tokens = {...tokens, (value): {value, is_sep}}
+
   next_partials = match true:
     is_sep: {...partials, ...get_partials:: value}
     else: partials
@@ -123,5 +149,9 @@ add_token = fn value, is_sep=true: fn {partials, separators, ...ctx}:
     is_sep: {...separators, (value): true}
     else: separators
 
-  {...ctx, partials: next_partials, separators: next_seperators}
+  { ...ctx,
+    tokens: next_tokens,
+    partials: next_partials,
+    separators: next_seperators
+  }
 

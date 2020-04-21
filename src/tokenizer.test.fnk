@@ -1,4 +1,4 @@
-{describe, it, expect, to_equal} = import './testing'
+{describe, it, expect, to_equal} = import '@fink/jest'
 
 {init_tokenizer, add_token} = import './tokenizer'
 {end_token, get_next_token, get_text} = import './tokenizer'
@@ -83,6 +83,7 @@ describe:: 'tokenizer', fn:
           }
         }
 
+      fn: undefined
 
   it:: 'tokenizes multiple lines', fn:
     pipe tokenize:: 'foo\n 1234':
@@ -130,6 +131,7 @@ describe:: 'tokenizer', fn:
             end: {pos: 9, line: 2, column: 5}
           }
         }
+      fn: undefined
 
 
   it:: 'tokenizes separating multi-char symbols', fn:
@@ -196,6 +198,7 @@ describe:: 'tokenizer', fn:
             end: {pos: 10, line: 1, column: 10}
           }
         }
+      fn: undefined
 
 
   it:: 'tokenizes non-separating multi-char symbols', fn:
@@ -235,6 +238,7 @@ describe:: 'tokenizer', fn:
             end: {pos: 7, line: 1, column: 7}
           }
         }
+      fn: undefined
 
 
   it:: 'handles empty code', fn:
@@ -248,17 +252,18 @@ describe:: 'tokenizer', fn:
           }
         }
 
+      fn: undefined
 
   it:: 'gets text after token', fn:
     ctx = tokenize:: '
-        `
-          foo
-          bar = spam
-        `
-      '
+      `
+        foo
+        bar = spam
+      `
+    '
 
     [start_tkn, text_ctx] = get_next_token:: ctx
-    [txt, end_ctx] = get_text:: text_ctx , start_tkn.loc.end, rx/`/
+    [txt, end_ctx] = get_text:: text_ctx, start_tkn.loc.end, rx/`/
     [end_str_token, next_ctx] = get_next_token:: end_ctx
     [nl_token, end_end_ctx] = get_next_token:: next_ctx
     [end_end_token] = get_next_token:: end_end_ctx
@@ -318,10 +323,11 @@ describe:: 'tokenizer', fn:
           }
         }
 
+
   it:: 'gets empty text after token', fn:
     ctx = tokenize:: '``'
     [start_tkn, text_ctx] = get_next_token:: ctx
-    [txt, end_ctx] = get_text:: text_ctx , start_tkn.loc.end, rx/`/
+    [txt, end_ctx] = get_text:: text_ctx, start_tkn.loc.end, rx/`/
     [end_str_token, next_ctx] = get_next_token:: end_ctx
     [end_end_token] = get_next_token:: next_ctx
 
@@ -373,7 +379,7 @@ describe:: 'tokenizer', fn:
   it:: 'gets single line text after token', fn:
     ctx = tokenize:: '`foobar`'
     [start_tkn, text_ctx] = get_next_token:: ctx
-    [txt, end_ctx] = get_text:: text_ctx , start_tkn.loc.end, rx/`/
+    [txt, end_ctx] = get_text:: text_ctx, start_tkn.loc.end, rx/`/
     [end_str_token, next_ctx] = get_next_token:: end_ctx
     [end_end_token] = get_next_token:: next_ctx
 

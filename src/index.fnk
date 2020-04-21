@@ -33,12 +33,9 @@ next_is = fn ctx, expected:
 
 next_matches = fn ctx, regex:
   value = next_value:: ctx
-  # TODO string check, could be a symbol
-  (
-    value.constructor == String
-    && value.match(regex)
-    && true
-  )
+  match value:
+    {match: {}}: null != value.match:: regex
+    else: false
 
 
 next_is_end = fn ctx, expected_end:

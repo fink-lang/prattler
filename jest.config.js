@@ -7,7 +7,7 @@ module.exports = {
   modulePathIgnorePatterns: ['<rootDir>/build/'],
 
   transform: {
-    '^.+\\.fnk$': '@fink/jest'
+    '^.+\\.fnk$': '@fink/jest/transform'
   },
   transformIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/build/'],
 

@@ -9,19 +9,20 @@ other_token = Symbol:: 'other'
 auto = Symbol:: 'auto'
 
 
+
 symbol = fn id: {
   id,
-  lbp: fn lbp: fn: lbp,
-  nud: null,
+  lbp: fn lbp: fn: lbp
+  nud: null
   led: null
 }
 
 
 init_symbols = fn: {
-  next_lbp: 2,
-  lbps: {(end_token): fn: 0},
-  nuds: {},
-  leds: {},
+  next_lbp: 2
+  lbps: {(end_token): fn: 0}
+  nuds: {}
+  leds: {}
   igns: {}
 }
 

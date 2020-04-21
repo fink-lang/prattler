@@ -1,9 +1,9 @@
-{describe, it, expect, not, to_equal, to_throw, anything} = import './testing'
+{describe, it, expect, not, to_equal, to_throw, anything} = import '@fink/jest'
 
 {init_parser, start_parser} = import '.'
 {curr_is, curr_value, curr_loc} = import '.'
 {next_is, next_is_end, next_matches, next_loc} = import '.'
-{assert_curr, assert_next, assert_advance} = import '.'
+{assert_curr, assert_next, assert_advance, advance} = import '.'
 {expression, collect_text} = import '.'
 
 {add_separator, add_operator, add_identifier} = import './symbols'
@@ -177,6 +177,16 @@ describe:: 'next token tests and assertions', fn:
     expect::
       next_matches:: ctx, rx/;/
       to_equal:: true
+
+
+  it:: 'checks if does not match if at end', fn:
+    [, ctx] = parse:: `foo`
+
+    next_ctx = advance:: ctx
+
+    expect::
+      next_matches:: next_ctx, rx/foo/
+      to_equal:: false
 
 
   it:: 'gets next token loc', fn:

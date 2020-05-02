@@ -1,6 +1,6 @@
 {inspect} = import 'util'
 
-{init_tokenizer, end_token, get_next_token, get_text} = import './tokenizer'
+{init_tokenizer, get_next_token, get_text} = import './tokenizer'
 {init_symbols, ignorable, next_lbp, led, nud} = import './symbols'
 {obj_has} = import './obj'
 {token_error} = import './errors'
@@ -16,7 +16,7 @@ curr_loc = fn {curr_token}:
 
 
 curr_is = fn ctx, expected:
-  expected == curr_value:: ctx
+  expected == curr_value ctx
 
 
 next_value = fn {next_token}:
@@ -28,98 +28,108 @@ next_loc = fn {next_token}:
 
 
 next_is = fn ctx, expected:
-  expected == next_value:: ctx
+  expected == next_value ctx
 
 
 next_matches = fn ctx, regex:
-  value = next_value:: ctx
+  value = next_value ctx
   match value:
-    {match: {}}: null != value.match:: regex
+    {match: {}}:
+      match value.match regex:
+        {}: true
+        else: false
     else: false
 
 
 next_is_end = fn ctx, expected_end:
-  next_is(ctx, end_token) || next_is(ctx, expected_end)
+  match ctx:
+    {next_token: {end: true}}: true
+    next_is ?, expected_end: true
+    else: false
 
 
 assert_token = fn token, expected, ctx:
   {value} = token
   match value:
     # TODO: don't use Array methods
-    !expected.includes:: ?:
-      throw token_error::
-        `Expected one of ${inspect(expected)} but found ${inspect(value)}.`
+    !expected.includes ?:
+      throw token_error
+        `Expected one of ${inspect expected} but found ${inspect value}.`
         token
         ctx
 
 
 assert_next = fn ctx, ...expected:
   {next_token} = ctx
-  assert_token:: next_token, expected, ctx
+  assert_token next_token, expected, ctx
 
 
 assert_curr = fn ctx, ...expected:
   {curr_token} = ctx
-  assert_token:: curr_token, expected, ctx
+  assert_token curr_token, expected, ctx
 
 
 assert_not_end = fn ctx:
   match ctx:
-    next_is_end:: ?:
-      throw token_error::
+    next_is_end ?:
+      throw token_error
         `Unexpected end of code.`
         ctx.next_token
         ctx
 
 
+ingnorable_token = {ignorable: true}
+
+
 advance = fn ctx:
   curr_token = ctx.next_token
 
-  [next_token, tokenizer] = pipe [null, ctx.tokenizer]:
-    unfold [, tokenizer]:
+  [next_token, tokenizer] = pipe ctx.tokenizer:
+    unfold tokenizer:
       # TODO: should it return [tokenizer_ctx, next_token]?
-      [next_token, next_tokenizer] = get_next_token:: tokenizer
-      match next_token:
-        ignorable:: ctx, ?:
-          [null, next_tokenizer]
-        else:
-          [next_token, next_tokenizer]
+      [next_token, next_tokenizer] = get_next_token tokenizer
+
+      token = match next_token:
+        ignorable ctx, ?: ingnorable_token
+        else: next_token
+
+      ([token, next_tokenizer], next_tokenizer)
 
     find [token]:
-      token != null
+      token != ingnorable_token
 
   {...ctx, tokenizer, curr_token, next_token}
 
 
 assert_advance = fn ctx, ...expected:
-  assert_next:: ctx, ...expected
-  advance:: ctx
+  assert_next ctx, ...expected
+  advance ctx
 
 
 collect_text = fn ctx, stop_at:
   {curr_token} = ctx
 
-  [text, next_tokenizer] = get_text:: ctx.tokenizer, curr_token.loc.end, stop_at
-  [next_token, tokenizer] = get_next_token:: next_tokenizer
+  [text, next_tokenizer] = get_text ctx.tokenizer, curr_token.loc.end, stop_at
+  [next_token, tokenizer] = get_next_token next_tokenizer
 
   next_ctx = {...ctx, tokenizer, curr_token: text, next_token}
 
-  assert_not_end:: next_ctx
+  assert_not_end next_ctx
 
-  [text, advance:: next_ctx]
+  [text, advance next_ctx]
 
 
 expression = fn ctx, rbp:
-  assert_not_end:: ctx
+  assert_not_end ctx
 
   [left, next_ctx] = pipe ctx:
     advance
     nud
     unfold [left, ctx]:
       match true:
-        rbp < next_lbp:: ctx, left:
-          led_ctx = advance:: ctx
-          [next_left, next_ctx] = led:: led_ctx, left
+        rbp < next_lbp ctx, left:
+          led_ctx = advance ctx
+          [next_left, next_ctx] = led led_ctx, left
           [next_left, next_ctx, false]
         else:
           [left, ctx, true]
@@ -130,24 +140,24 @@ expression = fn ctx, rbp:
   [left, next_ctx]
 
 
+start_token = dict:
+  start_token: true
+  loc: dict:
+    start: {pos: 0, line: 1, column: 0}
+    end: {pos: 0, line: 1, column: 0}
+
+
 init_parser = fn {code, filename}:
-  tokenizer = init_tokenizer:: code, filename
+  tokenizer = init_tokenizer code, filename
   symbols = init_symbols()
 
-  {
-    curr_token: null,
-    next_token: {
-      loc: {
-        start: {pos: 0, line: 1, column: 0},
-        end: {pos: 0, line: 1, column: 0}
-      }
-    },
-
-    tokenizer,
+  dict:
+    curr_token: start_token
+    next_token: start_token
+    tokenizer
     symbols
-  }
 
 
 start_parser = fn ctx:
-  advance:: ctx
+  advance ctx
 

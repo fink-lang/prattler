@@ -7,10 +7,10 @@ token_error = fn msg, token, {tokenizer: {code, filename}}:
 
   snippet = `
     ${filename}:${line}:${column}
-    ${highlight_code_loc:: code, loc}
+    ${highlight_code_loc code, loc}
 
     ${msg}
   `
 
   # TODO: remove first line of err.stack
-  new SyntaxError:: snippet
+  new SyntaxError snippet

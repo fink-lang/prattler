@@ -1,30 +1,27 @@
 {inspect} = import 'util'
 
-{add_token, end_token} = import './tokenizer'
+{add_token} = import './tokenizer'
 {token_error} = import './errors'
 {obj_has} = import './obj'
 
 
-other_token = Symbol:: 'other'
-auto = Symbol:: 'auto'
+other_token = Symbol 'other'
+auto = Symbol 'auto'
 
 
-
-symbol = fn id: {
-  id,
+symbol = fn id: dict:
+  id
   lbp: fn lbp: fn: lbp
-  nud: null
-  led: null
-}
+# nud: not-set
+# led: not-set
 
 
-init_symbols = fn: {
+init_symbols = fn: dict:
   next_lbp: 2
-  lbps: {(end_token): fn: 0}
+  lbps: {}
   nuds: {}
   leds: {}
   igns: {}
-}
 
 
 add_symbol = fn symb, lbp, is_sep: fn {symbols, tokenizer, ...ctx}:
@@ -34,54 +31,53 @@ add_symbol = fn symb, lbp, is_sep: fn {symbols, tokenizer, ...ctx}:
     auto: next_lbp
     else: lbp
 
-  next_lbps = {...lbps, (symb.id): symb.lbp:: symb_lbp}
+  next_lbps = {...lbps, (symb.id): symb.lbp symb_lbp}
 
-  next_nuds = match symb.nud || null:
-    null: nuds
-    else: {...nuds, (symb.id): symb.nud:: symb_lbp}
+  next_nuds = match symb.nud:
+    # TODO: {} should be a match operator: callable
+    {}: {...nuds, (symb.id): symb.nud symb_lbp}
+    else: nuds
 
-  next_leds = match symb.led || null:
-    null: leds
-    else: {...leds, (symb.id): symb.led:: symb_lbp}
+  next_leds = match symb.led:
+    # TODO: {} should be a match operator: callable
+    {}: {...leds, (symb.id): symb.led symb_lbp}
+    else: leds
 
   next_tokenizer = pipe tokenizer:
-    add_token:: symb.id, is_sep
+    add_token symb.id, is_sep
 
-  {
-    ...ctx,
-    tokenizer: next_tokenizer,
-    symbols: {
-      next_lbp: next_lbp + 2,
-      lbps: next_lbps,
-      nuds: next_nuds,
+  dict:
+    ...ctx
+    tokenizer: next_tokenizer
+    symbols: dict:
+      next_lbp: next_lbp + 2
+      lbps: next_lbps
+      nuds: next_nuds
       leds: next_leds
-    }
-  }
 
 
 add_whitespace = fn token_val: fn {tokenizer, igns, ...ctx}:
   next_tokenizer = pipe tokenizer:
-    add_token:: token_val, true
+    add_token token_val, true
 
-  {
-    ...ctx,
-    tokenizer: next_tokenizer,
+  dict:
+    ...ctx
+    tokenizer: next_tokenizer
     igns: {...igns, (token_val): true}
-  }
 
 
-add_separator = fn symb: add_symbol:: symb, 0, true
+add_separator = fn symb: add_symbol symb, 0, true
 
 
-add_operator = fn symb: add_symbol:: symb, auto, true
+add_operator = fn symb: add_symbol symb, auto, true
 
 
 # TODO: keep it or just have add_identifier, add_keyword
 # istanbul ignore next
-add_non_separating = fn symb: add_symbol:: symb, auto, false
-add_identifier = fn symb: add_symbol:: symb, auto, false
+add_non_separating = fn symb: add_symbol symb, auto, false
+add_identifier = fn symb: add_symbol symb, auto, false
 # istanbul ignore next
-add_keyword = fn symb: add_symbol:: symb, auto, false
+add_keyword = fn symb: add_symbol symb, auto, false
 
 
 # TODO: add_comment
@@ -90,11 +86,11 @@ add_keyword = fn symb: add_symbol:: symb, auto, false
 
 curr_is_separator = fn ctx:
   {curr_token, tokenizer: {separators}} = ctx
-  obj_has:: separators, curr_token.value
+  obj_has separators, curr_token.value
 
 
 ignorable = fn ctx, token:
-  match token && obj_has:: ctx.igns, token.value:
+  match token && obj_has ctx.igns, token.value:
     true: true
     else: false
 
@@ -104,57 +100,65 @@ nud = fn ctx:
   {value} = curr_token
 
   nud_fn = match true:
-    obj_has:: nuds, value:
+    obj_has nuds, value:
       nuds.(value)
 
-    curr_is_separator:: ctx:
-      throw token_error::
+    curr_is_separator ctx:
+      throw token_error
         `Unexpected token '${value}' at start of expression.`
         curr_token
         ctx
-      null
 
     else:
       nuds.(other_token)
 
-  nud_fn:: ctx
+  nud_fn ctx
 
+not_found = {}
 
 led = fn ctx, left:
   {curr_token, symbols: {leds}} = ctx
   {value} = curr_token
 
   led_fn = match true:
-    obj_has:: leds, value:
+    obj_has leds, value:
       leds.(value)
 
-    curr_is_separator:: ctx:
-      null
+    curr_is_separator ctx:
+      not_found
 
-    else:
+    # istanbul ignore next
+    obj_has leds, other_token:
       leds.(other_token)
 
-  match !led_fn:
-    true:
-      throw token_error::
-        `Cannot use ${inspect:: value} as an infix operator.`
+    else:
+      not_found
+
+  match led_fn:
+    not_found:
+      throw token_error
+        `Cannot use ${inspect value} as an infix operator.`
         curr_token
         ctx
 
-    else: led_fn:: ctx, left
+    else: led_fn ctx, left
 
 
 next_lbp = fn ctx, left:
   {next_token, symbols: {lbps}} = ctx
   {value} = next_token
 
-  lbp_fn = match true:
-    obj_has:: lbps, value:
+  lbp_fn = match next_token:
+    {end: true}:
+      fn: 0
+
+    obj_has lbps, ?.value:
       lbps.(value)
+
     else:
       # any other_token will act like a separators by default
       # so it is OK to use it as fallback
       lbps.(other_token)
 
-  lbp_fn:: ctx, left
+  lbp_fn ctx, left
 

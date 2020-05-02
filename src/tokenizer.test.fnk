@@ -6,425 +6,363 @@
 
 expect_next_to_equal = fn expected:
   fn ctx:
-    [next_token, next_ctx] = get_next_token:: ctx
+    [next_token, next_ctx] = get_next_token ctx
 
-    expect::
+    expect
       next_token
-      to_equal:: expected
+      to_equal expected
 
     next_ctx
 
 
 tokenize = fn code:
-  ctx = pipe init_tokenizer:: code, 'test.fnk':
-    add_token:: ' '
-    add_token:: '\n'
-    add_token:: '='
-    add_token:: '!='
-    add_token:: '`'
-    add_token:: 'ni', false
+  ctx = pipe init_tokenizer code, 'test.fnk':
+    add_token ' '
+    add_token '\n'
+    add_token '='
+    add_token '!='
+    add_token '`'
+    add_token 'ni', false
   ctx
 
 
-describe:: 'tokenizer', fn:
-  it:: 'tokenizes single line', fn:
-    pipe tokenize:: 'foo = 1234':
-      expect_next_to_equal::
-        {
-          value: 'foo',
-          loc: {
-            start: {pos: 0, line: 1, column: 0},
+describe 'tokenizer', fn:
+  it 'tokenizes single line', fn:
+    pipe tokenize 'foo = 1234':
+      expect_next_to_equal
+        dict:
+          value: 'foo'
+          loc: dict:
+            start: {pos: 0, line: 1, column: 0}
             end: {pos: 3, line: 1, column: 3}
-          }
-        }
 
-      expect_next_to_equal::
-        {
-          value: ' ',
-          loc: {
-            start: {pos: 3, line: 1, column: 3},
+      expect_next_to_equal
+        dict:
+          value: ' '
+          loc: dict:
+            start: {pos: 3, line: 1, column: 3}
             end: {pos: 4, line: 1, column: 4}
-          }
-        }
 
-      expect_next_to_equal::
-        {
-          value: '=',
-          loc: {
-            start: {pos: 4, line: 1, column: 4},
+      expect_next_to_equal
+        dict:
+          value: '='
+          loc: dict:
+            start: {pos: 4, line: 1, column: 4}
             end: {pos: 5, line: 1, column: 5}
-          }
-        }
 
-      expect_next_to_equal::
-        {
-          value: ' ',
-          loc: {
-            start: {pos: 5, line: 1, column: 5},
+      expect_next_to_equal
+        dict:
+          value: ' '
+          loc: dict:
+            start: {pos: 5, line: 1, column: 5}
             end: {pos: 6, line: 1, column: 6}
-          }
-        }
 
-      expect_next_to_equal::
-        {
-          value: '1234',
-          loc: {
-            start: {pos: 6, line: 1, column: 6},
+      expect_next_to_equal
+        dict:
+          value: '1234'
+          loc: dict:
+            start: {pos: 6, line: 1, column: 6}
             end: {pos: 10, line: 1, column: 10}
-          }
-        }
 
-      expect_next_to_equal::
-        {
-          value: end_token,
-          loc: {
-            start: {pos: 10, line: 1, column: 10},
+      expect_next_to_equal
+        dict:
+          value: end_token
+          end: true
+          loc: dict:
+            start: {pos: 10, line: 1, column: 10}
             end: {pos: 10, line: 1, column: 10}
-          }
-        }
 
       fn: undefined
 
-  it:: 'tokenizes multiple lines', fn:
-    pipe tokenize:: 'foo\n 1234':
-      expect_next_to_equal::
-        {
-          value: 'foo',
-          loc: {
-            start: {pos: 0, line: 1, column: 0},
+  it 'tokenizes multiple lines', fn:
+    pipe tokenize 'foo\n 1234':
+      expect_next_to_equal
+        dict:
+          value: 'foo'
+          loc: dict:
+            start: {pos: 0, line: 1, column: 0}
             end: {pos: 3, line: 1, column: 3}
-          }
-        }
 
-      expect_next_to_equal::
-        {
-          value: '\n',
-          loc: {
-            start: {pos: 3, line: 1, column: 3},
+      expect_next_to_equal
+        dict:
+          value: '\n'
+          loc: dict:
+            start: {pos: 3, line: 1, column: 3}
             end: {pos: 4, line: 1, column: 4}
-          }
-        }
 
-      expect_next_to_equal::
-        {
-          value: ' ',
-          loc: {
-            start: {pos: 4, line: 2, column: 0},
+      expect_next_to_equal
+        dict:
+          value: ' '
+          loc: dict:
+            start: {pos: 4, line: 2, column: 0}
             end: {pos: 5, line: 2, column: 1}
-          }
-        }
 
-      expect_next_to_equal::
-        {
-          value: '1234',
-          loc: {
-            start: {pos: 5, line: 2, column: 1},
+      expect_next_to_equal
+        dict:
+          value: '1234'
+          loc: dict:
+            start: {pos: 5, line: 2, column: 1}
             end: {pos: 9, line: 2, column: 5}
-          }
-        }
 
-      expect_next_to_equal::
-        {
-          value: end_token,
-          loc: {
-            start: {pos: 9, line: 2, column: 5},
+      expect_next_to_equal
+        dict:
+          value: end_token
+          end: true
+          loc: dict:
+            start: {pos: 9, line: 2, column: 5}
             end: {pos: 9, line: 2, column: 5}
-          }
-        }
+
       fn: undefined
 
 
-  it:: 'tokenizes separating multi-char symbols', fn:
-    pipe tokenize:: 'ni =!= 123':
-      expect_next_to_equal::
-        {
-          value: 'ni',
-          loc: {
-            start: {pos: 0, line: 1, column: 0},
+  it 'tokenizes separating multi-char symbols', fn:
+    pipe tokenize 'ni =!= 123':
+      expect_next_to_equal
+        dict:
+          value: 'ni'
+          loc: dict:
+            start: {pos: 0, line: 1, column: 0}
             end: {pos: 2, line: 1, column: 2}
-          }
-        }
 
-      expect_next_to_equal::
-        {
-          value: ' ',
-          loc: {
-            start: {pos: 2, line: 1, column: 2},
+      expect_next_to_equal
+        dict:
+          value: ' '
+          loc: dict:
+            start: {pos: 2, line: 1, column: 2}
             end: {pos: 3, line: 1, column: 3}
-          }
-        }
 
-      expect_next_to_equal::
-        {
-          value: '=',
-          loc: {
-            start: {pos: 3, line: 1, column: 3},
+      expect_next_to_equal
+        dict:
+          value: '='
+          loc: dict:
+            start: {pos: 3, line: 1, column: 3}
             end: {pos: 4, line: 1, column: 4}
-          }
-        }
 
-      expect_next_to_equal::
-        {
-          value: '!=',
-          loc: {
-            start: {pos: 4, line: 1, column: 4},
+      expect_next_to_equal
+        dict:
+          value: '!='
+          loc: dict:
+            start: {pos: 4, line: 1, column: 4}
             end: {pos: 6, line: 1, column: 6}
-          }
-        }
 
-      expect_next_to_equal::
-        {
-          value: ' ',
-          loc: {
-            start: {pos: 6, line: 1, column: 6},
+      expect_next_to_equal
+        dict:
+          value: ' '
+          loc: dict:
+            start: {pos: 6, line: 1, column: 6}
             end: {pos: 7, line: 1, column: 7}
-          }
-        }
 
-      expect_next_to_equal::
-        {
-          value: '123',
-          loc: {
-            start: {pos: 7, line: 1, column: 7},
+      expect_next_to_equal
+        dict:
+          value: '123'
+          loc: dict:
+            start: {pos: 7, line: 1, column: 7}
             end: {pos: 10, line: 1, column: 10}
-          }
-        }
 
-      expect_next_to_equal::
-        {
-          value: end_token,
-          loc: {
-            start: {pos: 10, line: 1, column: 10},
+      expect_next_to_equal
+        dict:
+          value: end_token
+          end: true
+          loc: dict:
+            start: {pos: 10, line: 1, column: 10}
             end: {pos: 10, line: 1, column: 10}
-          }
-        }
       fn: undefined
 
 
-  it:: 'tokenizes non-separating multi-char symbols', fn:
-    pipe tokenize:: 'ni nini':
-      expect_next_to_equal::
-        {
-          value: 'ni',
-          loc: {
-            start: {pos: 0, line: 1, column: 0},
+  it 'tokenizes non-separating multi-char symbols', fn:
+    pipe tokenize 'ni nini':
+      expect_next_to_equal
+        dict:
+          value: 'ni'
+          loc: dict:
+            start: {pos: 0, line: 1, column: 0}
             end: {pos: 2, line: 1, column: 2}
-          }
-        }
 
-      expect_next_to_equal::
-        {
-          value: ' ',
-          loc: {
-            start: {pos: 2, line: 1, column: 2},
+      expect_next_to_equal
+        dict:
+          value: ' '
+          loc: dict:
+            start: {pos: 2, line: 1, column: 2}
             end: {pos: 3, line: 1, column: 3}
-          }
-        }
 
-      expect_next_to_equal::
-        {
-          value: 'nini',
-          loc: {
-            start: {pos: 3, line: 1, column: 3},
+      expect_next_to_equal
+        dict:
+          value: 'nini'
+          loc: dict:
+            start: {pos: 3, line: 1, column: 3}
             end: {pos: 7, line: 1, column: 7}
-          }
-        }
 
-      expect_next_to_equal::
-        {
-          value: end_token,
-          loc: {
-            start: {pos: 7, line: 1, column: 7},
+      expect_next_to_equal
+        dict:
+          value: end_token
+          end: true
+          loc: dict:
+            start: {pos: 7, line: 1, column: 7}
             end: {pos: 7, line: 1, column: 7}
-          }
-        }
       fn: undefined
 
 
-  it:: 'handles empty code', fn:
-    pipe tokenize:: '':
-      expect_next_to_equal::
-        {
-          value: end_token,
-          loc: {
-            start: {pos: 0, line: 1, column: 0},
+  it 'handles empty code', fn:
+    pipe tokenize '':
+      expect_next_to_equal
+        dict:
+          value: end_token
+          end: true
+          loc: dict:
+            start: {pos: 0, line: 1, column: 0}
             end: {pos: 0, line: 1, column: 0}
-          }
-        }
 
       fn: undefined
 
-  it:: 'gets text after token', fn:
-    ctx = tokenize:: '
+
+  it 'gets text after token', fn:
+    ctx = tokenize '
       `
         foo
         bar = spam
       `
     '
 
-    [start_tkn, text_ctx] = get_next_token:: ctx
-    [txt, end_ctx] = get_text:: text_ctx, start_tkn.loc.end, rx/`/
-    [end_str_token, next_ctx] = get_next_token:: end_ctx
-    [nl_token, end_end_ctx] = get_next_token:: next_ctx
-    [end_end_token] = get_next_token:: end_end_ctx
+    [start_tkn, text_ctx] = get_next_token ctx
+    [txt, end_ctx] = get_text text_ctx, start_tkn.loc.end, rx/`/
+    [end_str_token, next_ctx] = get_next_token end_ctx
+    [nl_token, end_end_ctx] = get_next_token next_ctx
+    [end_end_token] = get_next_token end_end_ctx
 
-    expect::
+    expect
       start_tkn
-      to_equal::
-        {
-          value: '`',
-          loc: {
-            start: {pos: 0, line: 1, column: 0},
+      to_equal
+        dict:
+          value: '`'
+          loc: dict:
+            start: {pos: 0, line: 1, column: 0}
             end: {pos: 1, line: 1, column: 1}
-          }
-        }
 
-    expect::
+    expect
       txt
-      to_equal::
-        {
-          value: '\n  foo\n  bar = spam\n',
-          loc: {
-            start: {pos: 1, line: 1, column: 1},
+      to_equal
+        dict:
+          value: '\n  foo\n  bar = spam\n'
+          loc: dict:
+            start: {pos: 1, line: 1, column: 1}
             end: {pos: 21, line: 4, column: 0}
-          }
-        }
 
-    expect::
+    expect
       end_str_token
-      to_equal::
-        {
-          value: '`',
-          loc: {
-            start: {pos: 21, line: 4, column: 0},
+      to_equal
+        dict:
+          value: '`'
+          loc: dict:
+            start: {pos: 21, line: 4, column: 0}
             end: {pos: 22, line: 4, column: 1}
-          }
-        }
 
-    expect::
+    expect
       nl_token
-      to_equal::
-        {
-          value: '\n',
-          loc: {
-            start: {pos: 22, line: 4, column: 1},
+      to_equal
+        dict:
+          value: '\n'
+          loc: dict:
+            start: {pos: 22, line: 4, column: 1}
             end: {pos: 23, line: 4, column: 2}
-          }
-        }
 
-    expect::
+    expect
       end_end_token
-      to_equal::
-        {
-          value: end_token,
-          loc: {
-            start: {pos: 23, line: 5, column: 0},
+      to_equal
+        dict:
+          value: end_token
+          end: true
+          loc: dict:
+            start: {pos: 23, line: 5, column: 0}
             end: {pos: 23, line: 5, column: 0}
-          }
-        }
 
 
-  it:: 'gets empty text after token', fn:
-    ctx = tokenize:: '``'
-    [start_tkn, text_ctx] = get_next_token:: ctx
-    [txt, end_ctx] = get_text:: text_ctx, start_tkn.loc.end, rx/`/
-    [end_str_token, next_ctx] = get_next_token:: end_ctx
-    [end_end_token] = get_next_token:: next_ctx
+  it 'gets empty text after token', fn:
+    ctx = tokenize '``'
+    [start_tkn, text_ctx] = get_next_token ctx
+    [txt, end_ctx] = get_text text_ctx, start_tkn.loc.end, rx/`/
+    [end_str_token, next_ctx] = get_next_token end_ctx
+    [end_end_token] = get_next_token next_ctx
 
-    expect::
+    expect
       start_tkn
-      to_equal::
-        {
-          value: '`',
-          loc: {
-            start: {pos: 0, line: 1, column: 0},
+      to_equal
+        dict:
+          value: '`'
+          loc: dict:
+            start: {pos: 0, line: 1, column: 0}
             end: {pos: 1, line: 1, column: 1}
-          }
-        }
 
-    expect::
+    expect
       txt
-      to_equal::
-        {
-          value: '',
-          loc: {
-            start: {pos: 1, line: 1, column: 1},
+      to_equal
+        dict:
+          value: ''
+          loc: dict:
+            start: {pos: 1, line: 1, column: 1}
             end: {pos: 1, line: 1, column: 1}
-          }
-        }
 
-    expect::
+    expect
       end_str_token
-      to_equal::
-        {
-          value: '`',
-          loc: {
-            start: {pos: 1, line: 1, column: 1},
+      to_equal
+        dict:
+          value: '`'
+          loc: dict:
+            start: {pos: 1, line: 1, column: 1}
             end: {pos: 2, line: 1, column: 2}
-          }
-        }
 
-    expect::
+    expect
       end_end_token
-      to_equal::
-        {
-          value: end_token,
-          loc: {
-            start: {pos: 2, line: 1, column: 2},
+      to_equal
+        dict:
+          value: end_token
+          end: true
+          loc: dict:
+            start: {pos: 2, line: 1, column: 2}
             end: {pos: 2, line: 1, column: 2}
-          }
-        }
 
 
-  it:: 'gets single line text after token', fn:
-    ctx = tokenize:: '`foobar`'
-    [start_tkn, text_ctx] = get_next_token:: ctx
-    [txt, end_ctx] = get_text:: text_ctx, start_tkn.loc.end, rx/`/
-    [end_str_token, next_ctx] = get_next_token:: end_ctx
-    [end_end_token] = get_next_token:: next_ctx
+  it 'gets single line text after token', fn:
+    ctx = tokenize '`foobar`'
+    [start_tkn, text_ctx] = get_next_token ctx
+    [txt, end_ctx] = get_text text_ctx, start_tkn.loc.end, rx/`/
+    [end_str_token, next_ctx] = get_next_token end_ctx
+    [end_end_token] = get_next_token next_ctx
 
-    expect::
+    expect
       start_tkn
-      to_equal::
-        {
-          value: '`',
-          loc: {
-            start: {pos: 0, line: 1, column: 0},
+      to_equal
+        dict:
+          value: '`'
+          loc: dict:
+            start: {pos: 0, line: 1, column: 0}
             end: {pos: 1, line: 1, column: 1}
-          }
-        }
 
-    expect::
+    expect
       txt
-      to_equal::
-        {
-          value: 'foobar',
-          loc: {
-            start: {pos: 1, line: 1, column: 1},
+      to_equal
+        dict:
+          value: 'foobar'
+          loc: dict:
+            start: {pos: 1, line: 1, column: 1}
             end: {pos: 7, line: 1, column: 7}
-          }
-        }
 
-    expect::
+    expect
       end_str_token
-      to_equal::
-        {
-          value: '`',
-          loc: {
-            start: {pos: 7, line: 1, column: 7},
+      to_equal
+        dict:
+          value: '`'
+          loc: dict:
+            start: {pos: 7, line: 1, column: 7}
             end: {pos: 8, line: 1, column: 8}
-          }
-        }
 
-    expect::
+    expect
       end_end_token
-      to_equal::
-        {
-          value: end_token,
-          loc: {
-            start: {pos: 8, line: 1, column: 8},
+      to_equal
+        dict:
+          value: end_token
+          end: true
+          loc: dict:
+            start: {pos: 8, line: 1, column: 8}
             end: {pos: 8, line: 1, column: 8}
-          }
-        }
 
 

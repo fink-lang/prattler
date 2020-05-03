@@ -1,16 +1,29 @@
 {highlight_code_loc} = import '@fink/snippet'
 
 
-token_error = fn msg, token, {tokenizer: {code, filename}}:
-  {loc} = token
-  {start: {line, column}} = loc
+get_stack_trace = fn func:
+  err = {}
+  Error.captureStackTrace err, func
+  err.stack
 
-  snippet = `
-    ${filename}:${line}:${column}
-    ${highlight_code_loc:: code, loc}
 
-    ${msg}
-  `
+get_error = fn ctx, msg, token, stack_func:
+  {tokenizer: {code, filename}} = ctx
+  {start: {line, column}} = token.loc
 
-  # TODO: remove first line of err.stack
-  new SyntaxError:: snippet
+  error = dict:
+    error: `
+      ${filename}:${line}:${column}
+      ${highlight_code_loc code, token.loc}
+
+      ${msg}
+      `
+    token
+    stack: get_stack_trace stack_func
+
+  error
+
+
+add_error = fn ctx, msg, token:
+  error = get_error ctx, msg, token, add_error
+  [error, {...ctx, errors: [...ctx.errors, error]}]

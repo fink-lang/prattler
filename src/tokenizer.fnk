@@ -1,6 +1,6 @@
 {obj_has} = import './obj'
 
-end_token = Symbol:: 'end'
+end_token = Symbol 'end'
 
 
 get_partials = fn [start, ...rest], pre='':
@@ -9,7 +9,7 @@ get_partials = fn [start, ...rest], pre='':
     {length: 0}:
       {(key): false}
     else:
-      partials = get_partials:: rest, key
+      partials = get_partials rest, key
       {(key): true, ...partials}
 
 
@@ -29,54 +29,56 @@ get_next_char = fn code, prev_loc:
   char = code.(prev_loc.pos)
   prev_char = code.(prev_loc.pos - 1)
 
-  next_loc = get_next_loc:: char, prev_char, prev_loc
+  next_loc = get_next_loc char, prev_char, prev_loc
   [char, next_loc]
 
 
 handle_end = fn value, start, end, ctx:
   match value:
-    '': [
-      {value: end_token, loc: {start: end, end}},
+    '': list:
+      {value: end_token, end: true, loc: {start: end, end}}
       {...ctx, partial_token: {value: '', loc: {start, end}}}
-    ]
+
     '\n':
       nend = {pos: end.pos, line: end.line+1, column: 0}
-      [
-        {value, loc: {start, end}},
+      list:
+        {value, loc: {start, end}}
         {...ctx, partial_token: {value: '', loc:{start: nend, end: nend}}}
-      ]
+
     else:
-      [
-        {value, loc: {start, end}},
+      list:
+        {value, loc: {start, end}}
         {...ctx, partial_token: {value: '', loc: {start, end}}}
-      ]
 
 
 get_text = fn ctx, start, stop_at:
   {code} = ctx
 
-  search_text = code.slice:: start.pos
-  idx = search_text.search:: stop_at
+  search_text = code.slice start.pos
+  idx = search_text.search stop_at
 
   text = match idx:
-    -1: search_text.slice:: 0
-    else: search_text.slice:: 0, idx
+    -1: search_text.slice 0
+    else: search_text.slice 0, idx
 
-  lines = text.split:: rx/\n/g
+  lines = text.split rx/\n/g
 
   line = start.line + lines.length - 1
-  column = match lines.length:
-    1: start.column + text.length
-    else: lines.(lines.length - 1).length
+  column = match lines:
+    {length: 1}:
+      start.column + text.length
+    else:
+      [..., last] = lines
+      last.length
 
   end = {pos: start.pos + text.length, line, column}
 
   partial_token = match text:
-    ?.endsWith:: '\n':
-      [value, loc] = get_next_char:: code, {...end, line: end.line-1}
+    ?.endsWith '\n':
+      [value, loc] = get_next_char code, {...end, line: end.line-1}
       {value, loc}
     else:
-      [value, loc] = get_next_char:: code, end
+      [value, loc] = get_next_char code, end
       {value, loc}
 
   next_ctx = {...ctx, partial_token}
@@ -91,14 +93,14 @@ get_next_token = fn ctx:
     unfold [value, value_loc]:
       match true:
         value_loc.end.pos < code.length:
-          [char, char_loc] = get_next_char:: code, value_loc.end
+          [char, char_loc] = get_next_char code, value_loc.end
           new_value = `${value}${char}`
 
           is_seperator = match separators:
-            obj_has:: ?, char: true
-            obj_has:: ?, value: true
+            obj_has ?, char: true
+            obj_has ?, value: true
 
-          is_partial = obj_has:: partials, new_value
+          is_partial = obj_has partials, new_value
 
           match true:
             is_seperator && !is_partial:
@@ -112,7 +114,7 @@ get_next_token = fn ctx:
               [new_value, ll, false]
         else:
           {start, end} = value_loc
-          [token, next_ctx] = handle_end:: value, start, end, ctx
+          [token, next_ctx] = handle_end value, start, end, ctx
           [token, next_ctx, true]
 
     find [, , done]:
@@ -122,36 +124,35 @@ get_next_token = fn ctx:
 
 
 init_tokenizer = fn code, filename:
-  {
-    code,
-    filename,
-    tokens: {},
-    partials: {},
-    separators: {},
-    partial_token: {
-      value: '',
-      loc: {
-        start: {pos: 0, line: 1, column: 0},
+  dict:
+    code
+    filename
+    tokens: {}
+    partials: {}
+    separators: {}
+    partial_token: dict:
+      value: ''
+      loc: dict:
+        start: {pos: 0, line: 1, column: 0}
         end: {pos: 0, line: 1, column: 0}
-      }
-    }
-  }
+
 
 
 add_token = fn value, is_sep=true: fn {tokens, partials, separators, ...ctx}:
   next_tokens = {...tokens, (value): {value, is_sep}}
 
   next_partials = match true:
-    is_sep: {...partials, ...get_partials:: value}
+    is_sep: {...partials, ...get_partials value}
     else: partials
 
   next_seperators = match true:
     is_sep: {...separators, (value): true}
     else: separators
 
-  { ...ctx,
-    tokens: next_tokens,
-    partials: next_partials,
+  dict:
+    ...ctx
+    tokens: next_tokens
+    partials: next_partials
     separators: next_seperators
-  }
+
 

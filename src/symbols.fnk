@@ -1,7 +1,7 @@
 {inspect} = import 'util'
 
 {add_token} = import './tokenizer'
-{token_error} = import './errors'
+{add_error} = import './errors'
 {obj_has} = import './obj'
 
 
@@ -79,9 +79,7 @@ add_identifier = fn symb: add_symbol symb, auto, false
 # istanbul ignore next
 add_keyword = fn symb: add_symbol symb, auto, false
 
-
 # TODO: add_comment
-# TODO: add_keyword
 
 
 curr_is_separator = fn ctx:
@@ -95,6 +93,24 @@ ignorable = fn ctx, token:
     else: false
 
 
+error_nud = fn ctx:
+  {curr_token, symbols: {nuds}} = ctx
+  {value} = curr_token
+
+  add_error ctx,
+    `Unexpected token '${value}' at start of expression.`
+    curr_token
+
+
+error_led = fn ctx, left:
+  {curr_token} = ctx
+  {value} = curr_token
+
+  add_error ctx,
+    `Cannot use ${inspect value} as an infix operator.`
+    curr_token
+
+
 nud = fn ctx:
   {curr_token, symbols: {nuds}} = ctx
   {value} = curr_token
@@ -103,18 +119,15 @@ nud = fn ctx:
     obj_has nuds, value:
       nuds.(value)
 
+    # TODO: should error_nud just be a nud func on seperators?
     curr_is_separator ctx:
-      throw token_error
-        `Unexpected token '${value}' at start of expression.`
-        curr_token
-        ctx
+      error_nud
 
     else:
       nuds.(other_token)
 
   nud_fn ctx
 
-not_found = {}
 
 led = fn ctx, left:
   {curr_token, symbols: {leds}} = ctx
@@ -125,23 +138,16 @@ led = fn ctx, left:
       leds.(value)
 
     curr_is_separator ctx:
-      not_found
+      error_led
 
     # istanbul ignore next
     obj_has leds, other_token:
       leds.(other_token)
 
     else:
-      not_found
+      error_led
 
-  match led_fn:
-    not_found:
-      throw token_error
-        `Cannot use ${inspect value} as an infix operator.`
-        curr_token
-        ctx
-
-    else: led_fn ctx, left
+  led_fn ctx, left
 
 
 next_lbp = fn ctx, left:

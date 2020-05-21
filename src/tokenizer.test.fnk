@@ -1,7 +1,7 @@
 {describe, it, expect, to_equal} = import '@fink/jest'
 
 {init_tokenizer, add_token} = import './tokenizer'
-{end_token, get_next_token, get_text} = import './tokenizer'
+{get_next_token, get_text} = import './tokenizer'
 
 
 expect_next_to_equal = fn expected:
@@ -66,13 +66,11 @@ describe 'tokenizer', fn:
 
       expect_next_to_equal
         dict:
-          value: end_token
           end: true
           loc: dict:
             start: {pos: 10, line: 1, column: 10}
             end: {pos: 10, line: 1, column: 10}
 
-      fn: undefined
 
   it 'tokenizes multiple lines', fn:
     pipe tokenize 'foo\n 1234':
@@ -106,13 +104,10 @@ describe 'tokenizer', fn:
 
       expect_next_to_equal
         dict:
-          value: end_token
           end: true
           loc: dict:
             start: {pos: 9, line: 2, column: 5}
             end: {pos: 9, line: 2, column: 5}
-
-      fn: undefined
 
 
   it 'tokenizes separating multi-char symbols', fn:
@@ -161,12 +156,10 @@ describe 'tokenizer', fn:
 
       expect_next_to_equal
         dict:
-          value: end_token
           end: true
           loc: dict:
             start: {pos: 10, line: 1, column: 10}
             end: {pos: 10, line: 1, column: 10}
-      fn: undefined
 
 
   it 'tokenizes non-separating multi-char symbols', fn:
@@ -194,25 +187,20 @@ describe 'tokenizer', fn:
 
       expect_next_to_equal
         dict:
-          value: end_token
           end: true
           loc: dict:
             start: {pos: 7, line: 1, column: 7}
             end: {pos: 7, line: 1, column: 7}
-      fn: undefined
 
 
   it 'handles empty code', fn:
     pipe tokenize '':
       expect_next_to_equal
         dict:
-          value: end_token
           end: true
           loc: dict:
             start: {pos: 0, line: 1, column: 0}
             end: {pos: 0, line: 1, column: 0}
-
-      fn: undefined
 
 
   it 'gets text after token', fn:
@@ -227,7 +215,7 @@ describe 'tokenizer', fn:
     [txt, end_ctx] = get_text text_ctx, start_tkn.loc.end, rx/`/
     [end_str_token, next_ctx] = get_next_token end_ctx
     [nl_token, end_end_ctx] = get_next_token next_ctx
-    [end_end_token] = get_next_token end_end_ctx
+    [end_token] = get_next_token end_end_ctx
 
     expect
       start_tkn
@@ -266,10 +254,9 @@ describe 'tokenizer', fn:
             end: {pos: 23, line: 4, column: 2}
 
     expect
-      end_end_token
+      end_token
       to_equal
         dict:
-          value: end_token
           end: true
           loc: dict:
             start: {pos: 23, line: 5, column: 0}
@@ -281,7 +268,7 @@ describe 'tokenizer', fn:
     [start_tkn, text_ctx] = get_next_token ctx
     [txt, end_ctx] = get_text text_ctx, start_tkn.loc.end, rx/`/
     [end_str_token, next_ctx] = get_next_token end_ctx
-    [end_end_token] = get_next_token next_ctx
+    [end_token] = get_next_token next_ctx
 
     expect
       start_tkn
@@ -311,10 +298,9 @@ describe 'tokenizer', fn:
             end: {pos: 2, line: 1, column: 2}
 
     expect
-      end_end_token
+      end_token
       to_equal
         dict:
-          value: end_token
           end: true
           loc: dict:
             start: {pos: 2, line: 1, column: 2}
@@ -326,7 +312,7 @@ describe 'tokenizer', fn:
     [start_tkn, text_ctx] = get_next_token ctx
     [txt, end_ctx] = get_text text_ctx, start_tkn.loc.end, rx/`/
     [end_str_token, next_ctx] = get_next_token end_ctx
-    [end_end_token] = get_next_token next_ctx
+    [end_token] = get_next_token next_ctx
 
     expect
       start_tkn
@@ -356,10 +342,9 @@ describe 'tokenizer', fn:
             end: {pos: 8, line: 1, column: 8}
 
     expect
-      end_end_token
+      end_token
       to_equal
         dict:
-          value: end_token
           end: true
           loc: dict:
             start: {pos: 8, line: 1, column: 8}

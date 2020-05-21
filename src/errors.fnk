@@ -1,10 +1,5 @@
 {highlight_code_loc} = import '@fink/snippet'
-
-
-get_stack_trace = fn func:
-  err = {}
-  Error.captureStackTrace err, func
-  err.stack
+{stack_trace} = import '@fink/std-lib/stack-trace'
 
 
 get_error = fn ctx, msg, token, stack_func:
@@ -19,7 +14,7 @@ get_error = fn ctx, msg, token, stack_func:
       ${msg}
       `
     token
-    stack: get_stack_trace stack_func
+    stack: stack_trace stack_func
 
   error
 

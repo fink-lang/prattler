@@ -1,25 +1,23 @@
-{describe, it, only, expect, to_equal} = import '@fink/jest'
+{describe, it, expect, to_equal} = import '@fink/jest'
 
 {init_parser, start_parser} = import '.'
 {curr_is, curr_value, curr_loc} = import '.'
 {next_is, next_is_end, next_matches, next_loc} = import '.'
-{advance_expected, advance, has_errors} = import '.'
+{advance_expected, advance} = import '.'
 {expression, collect_text} = import '.'
 
 {add_separator, add_operator, add_identifier} = import './symbols'
 {add_whitespace} = import './symbols'
-{symbol, other_token} = import './symbols'
-
-{end_token} = import './tokenizer'
+{symbol, other_symbol} = import './symbols'
 
 
 other = fn:
   dict:
-    ...symbol other_token
+    ...other_symbol
 
     nud: fn: fn ctx:
       value = curr_value ctx
-      [{type: other_token, value}, ctx]
+      [{type: 'other', value}, ctx]
 
 
 infix = fn op:
@@ -85,14 +83,14 @@ describe 'parser', fn:
           type: 'infx'
           op: '='
           left: {
-            type: other_token
+            type: 'other'
             value: 'foobar'
           }
           right: {
             type: 'prefix'
             op: '!'
             right: {
-              type: other_token
+              type: 'other'
               value: '123'
             }
           }

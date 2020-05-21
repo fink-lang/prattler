@@ -1,19 +1,25 @@
 {inspect} = import 'util'
+{obj_has} = import '@fink/std-lib/obj'
 
 {add_token} = import './tokenizer'
 {add_error} = import './errors'
-{obj_has} = import './obj'
 
 
-other_token = Symbol 'other'
-auto = Symbol 'auto'
+# TODO: this only works because '' can never be a token value
+other_token_value = ''
+auto = {auto: true}
 
 
-symbol = fn id: dict:
-  id
+symbol = fn token_value: dict:
+  token_value
+
   lbp: fn lbp: fn: lbp
 # nud: not-set
 # led: not-set
+
+other_symbol = dict:
+  token_value: other_token_value
+  lbp: fn lbp: fn: lbp
 
 
 init_symbols = fn: dict:
@@ -31,20 +37,20 @@ add_symbol = fn symb, lbp, is_sep: fn {symbols, tokenizer, ...ctx}:
     auto: next_lbp
     else: lbp
 
-  next_lbps = {...lbps, (symb.id): symb.lbp symb_lbp}
+  next_lbps = {...lbps, (symb.token_value): symb.lbp symb_lbp}
 
   next_nuds = match symb.nud:
     # TODO: {} should be a match operator: callable
-    {}: {...nuds, (symb.id): symb.nud symb_lbp}
+    {}: {...nuds, (symb.token_value): symb.nud symb_lbp}
     else: nuds
 
   next_leds = match symb.led:
     # TODO: {} should be a match operator: callable
-    {}: {...leds, (symb.id): symb.led symb_lbp}
+    {}: {...leds, (symb.token_value): symb.led symb_lbp}
     else: leds
 
   next_tokenizer = pipe tokenizer:
-    add_token symb.id, is_sep
+    add_token symb.token_value, is_sep
 
   dict:
     ...ctx
@@ -94,7 +100,7 @@ ignorable = fn ctx, token:
 
 
 error_nud = fn ctx:
-  {curr_token, symbols: {nuds}} = ctx
+  {curr_token} = ctx
   {value} = curr_token
 
   add_error ctx,
@@ -102,7 +108,7 @@ error_nud = fn ctx:
     curr_token
 
 
-error_led = fn ctx, left:
+error_led = fn ctx:
   {curr_token} = ctx
   {value} = curr_token
 
@@ -124,7 +130,7 @@ nud = fn ctx:
       error_nud
 
     else:
-      nuds.(other_token)
+      nuds.(other_token_value)
 
   nud_fn ctx
 
@@ -141,8 +147,8 @@ led = fn ctx, left:
       error_led
 
     # istanbul ignore next
-    obj_has leds, other_token:
-      leds.(other_token)
+    obj_has leds, other_token_value:
+      leds.(other_token_value)
 
     else:
       error_led
@@ -162,9 +168,9 @@ next_lbp = fn ctx, left:
       lbps.(value)
 
     else:
-      # any other_token will act like a separators by default
+      # any other_token_value will act like a separator by default
       # so it is OK to use it as fallback
-      lbps.(other_token)
+      lbps.(other_token_value)
 
   lbp_fn ctx, left
 

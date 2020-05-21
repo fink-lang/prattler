@@ -15,7 +15,7 @@ module.exports = {
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/build/'],
   watchPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/build/'],
 
-  timers: 'fake',
+  timers: 'modern',
   clearMocks: true,
   resetMocks: false,
 

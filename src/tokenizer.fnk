@@ -1,19 +1,20 @@
-{obj_has} = import './obj'
-
-end_token = Symbol 'end'
+{obj_has} = import '@fink/std-lib/obj'
+{slice, ends_with} = import '@fink/std-lib/str'
+{split, find_index} = import '@fink/std-lib/regex'
+{length} = import '@fink/std-lib/iter'
 
 
 get_partials = fn [start, ...rest], pre='':
   key = `${pre}${start}`
   match rest:
-    {length: 0}:
+    0 == length ?:
       {(key): false}
     else:
       partials = get_partials rest, key
       {(key): true, ...partials}
 
 
-get_next_loc = fn char, prev_char, {pos, line, column}:
+get_next_loc = fn prev_char, {pos, line, column}:
   match prev_char:
     '\n':
       start = {pos: pos, line: line + 1, column: 0}
@@ -27,16 +28,17 @@ get_next_loc = fn char, prev_char, {pos, line, column}:
 
 get_next_char = fn code, prev_loc:
   char = code.(prev_loc.pos)
+  # TODO std-lib/str char_at str, idx
   prev_char = code.(prev_loc.pos - 1)
 
-  next_loc = get_next_loc char, prev_char, prev_loc
+  next_loc = get_next_loc prev_char, prev_loc
   [char, next_loc]
 
 
 handle_end = fn value, start, end, ctx:
   match value:
     '': list:
-      {value: end_token, end: true, loc: {start: end, end}}
+      {end: true, loc: {start: end, end}}
       {...ctx, partial_token: {value: '', loc: {start, end}}}
 
     '\n':
@@ -54,27 +56,32 @@ handle_end = fn value, start, end, ctx:
 get_text = fn ctx, start, stop_at:
   {code} = ctx
 
-  search_text = code.slice start.pos
-  idx = search_text.search stop_at
+  search_text = slice code, start.pos
+
+  idx = find_index search_text, stop_at
 
   text = match idx:
-    -1: search_text.slice 0
-    else: search_text.slice 0, idx
+    -1: slice search_text, 0
+    else: slice search_text, 0, idx
 
-  lines = text.split rx/\n/g
+  text_len = length text
 
-  line = start.line + lines.length - 1
-  column = match lines:
-    {length: 1}:
-      start.column + text.length
+  lines = split text, rx/\n/
+  lines_len = length lines
+
+  line = start.line - 1 + lines_len
+  column = match lines_len:
+    1:
+      start.column + text_len
     else:
       [..., last] = lines
-      last.length
+      length last
 
-  end = {pos: start.pos + text.length, line, column}
+
+  end = {pos: start.pos + text_len, line, column}
 
   partial_token = match text:
-    ?.endsWith '\n':
+    ends_with ?, '\n':
       [value, loc] = get_next_char code, {...end, line: end.line-1}
       {value, loc}
     else:
@@ -91,8 +98,8 @@ get_next_token = fn ctx:
 
   [next_token, next_ctx] = pipe [start_val, start_loc]:
     unfold [value, value_loc]:
-      match true:
-        value_loc.end.pos < code.length:
+      match value_loc:
+        {end: {pos: ? < length code}}:
           [char, char_loc] = get_next_char code, value_loc.end
           new_value = `${value}${char}`
 

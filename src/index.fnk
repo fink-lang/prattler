@@ -1,10 +1,11 @@
 {inspect} = import 'util'
 
+{matches} = import '@fink/std-lib/regex'
+{length} = import '@fink/std-lib/iter'
+
 {init_tokenizer, get_next_token, get_text} = import './tokenizer'
 {init_symbols, ignorable, next_lbp, led, nud} = import './symbols'
 {add_error} = import './errors'
-
-{obj_has} = import './obj'
 
 
 # TODO: should it live here
@@ -20,7 +21,7 @@ start_token = dict:
 
 has_errors = fn ctx:
   match ctx:
-    {errors: {length: ? > 0}}: true
+    {errors: 0 < length ?}: true
     else: false
 
 
@@ -49,18 +50,18 @@ next_is = fn ctx, expected:
 
 
 next_is_any = fn ctx, ...expected:
-  # TODO: don't use JS methods
+  # TODO: use std-lib or in operator
   expected.includes next_value ctx
 
 
 next_matches = fn ctx, regex:
-  value = next_value ctx
-  match value:
-    {match: {}}:
-      match value.match regex:
-        {}: true
-        else: false
-    else: false
+  {next_token} = ctx
+  match next_token:
+    {end: true}:
+      false
+    else:
+      matches next_token.value, regex
+
 
 
 next_is_end = fn ctx, expected_end:
@@ -112,7 +113,7 @@ collect_text = fn ctx, stop_at:
 
   match next_ctx:
     next_is_end ?:
-      [err, end_ctx] = add_error next_ctx,
+      [, end_ctx] = add_error next_ctx,
         `Unexpected end of code.`
         next_ctx.next_token
       # TODO: advance end_ctx

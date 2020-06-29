@@ -98,7 +98,7 @@ advance_expected = fn ctx, ...expected:
     else:
       {value} = ctx.next_token
       [, next_ctx] = add_error ctx,
-        `Expected one of ${inspect expected} but found ${inspect value}.`
+        'Expected one of ${inspect expected} but found ${inspect value}.'
         ctx.next_token
       next_ctx
 
@@ -114,7 +114,7 @@ collect_text = fn ctx, stop_at:
   match next_ctx:
     next_is_end ?:
       [, end_ctx] = add_error next_ctx,
-        `Unexpected end of code.`
+        'Unexpected end of code.'
         next_ctx.next_token
       # TODO: advance end_ctx
       [text, end_ctx]
@@ -125,7 +125,7 @@ collect_text = fn ctx, stop_at:
 expression = fn ctx, rbp:
   match ctx:
     next_is_end ?:
-      add_error ctx, `Unexpected end of code.`, ctx.next_token
+      add_error ctx, 'Unexpected end of code.', ctx.next_token
 
     else:
       [left, next_ctx] = pipe ctx:
@@ -152,7 +152,7 @@ expression = fn ctx, rbp:
 
 init_parser = fn {code, filename}:
   tokenizer = init_tokenizer code, filename
-  symbols = init_symbols()
+  symbols = init_symbols _
 
   dict:
     curr_token: start_token

@@ -1,4 +1,5 @@
 {describe, it, expect, to_equal} = import '@fink/jest'
+{rx} = import '@fink/std-lib/regex'
 
 {init_tokenizer, add_token} = import './tokenizer'
 {get_next_token, get_text} = import './tokenizer'
@@ -21,7 +22,7 @@ tokenize = fn code:
     add_token '\n'
     add_token '='
     add_token '!='
-    add_token '`'
+    add_token '"'
     add_token 'ni', false
   ctx
 
@@ -205,14 +206,14 @@ describe 'tokenizer', fn:
 
   it 'gets text after token', fn:
     ctx = tokenize '
-      `
+      "
         foo
         bar = spam
-      `
+      "
     '
 
     [start_tkn, text_ctx] = get_next_token ctx
-    [txt, end_ctx] = get_text text_ctx, start_tkn.loc.end, rx/`/
+    [txt, end_ctx] = get_text text_ctx, start_tkn.loc.end, rx'"'
     [end_str_token, next_ctx] = get_next_token end_ctx
     [nl_token, end_end_ctx] = get_next_token next_ctx
     [end_token] = get_next_token end_end_ctx
@@ -221,7 +222,7 @@ describe 'tokenizer', fn:
       start_tkn
       to_equal
         dict:
-          value: '`'
+          value: '"'
           loc: dict:
             start: {pos: 0, line: 1, column: 0}
             end: {pos: 1, line: 1, column: 1}
@@ -239,7 +240,7 @@ describe 'tokenizer', fn:
       end_str_token
       to_equal
         dict:
-          value: '`'
+          value: '"'
           loc: dict:
             start: {pos: 21, line: 4, column: 0}
             end: {pos: 22, line: 4, column: 1}
@@ -264,9 +265,9 @@ describe 'tokenizer', fn:
 
 
   it 'gets empty text after token', fn:
-    ctx = tokenize '``'
+    ctx = tokenize '""'
     [start_tkn, text_ctx] = get_next_token ctx
-    [txt, end_ctx] = get_text text_ctx, start_tkn.loc.end, rx/`/
+    [txt, end_ctx] = get_text text_ctx, start_tkn.loc.end, rx'"'
     [end_str_token, next_ctx] = get_next_token end_ctx
     [end_token] = get_next_token next_ctx
 
@@ -274,7 +275,7 @@ describe 'tokenizer', fn:
       start_tkn
       to_equal
         dict:
-          value: '`'
+          value: '"'
           loc: dict:
             start: {pos: 0, line: 1, column: 0}
             end: {pos: 1, line: 1, column: 1}
@@ -292,7 +293,7 @@ describe 'tokenizer', fn:
       end_str_token
       to_equal
         dict:
-          value: '`'
+          value: '"'
           loc: dict:
             start: {pos: 1, line: 1, column: 1}
             end: {pos: 2, line: 1, column: 2}
@@ -308,9 +309,9 @@ describe 'tokenizer', fn:
 
 
   it 'gets single line text after token', fn:
-    ctx = tokenize '`foobar`'
+    ctx = tokenize '"foobar"'
     [start_tkn, text_ctx] = get_next_token ctx
-    [txt, end_ctx] = get_text text_ctx, start_tkn.loc.end, rx/`/
+    [txt, end_ctx] = get_text text_ctx, start_tkn.loc.end, rx'"'
     [end_str_token, next_ctx] = get_next_token end_ctx
     [end_token] = get_next_token next_ctx
 
@@ -318,7 +319,7 @@ describe 'tokenizer', fn:
       start_tkn
       to_equal
         dict:
-          value: '`'
+          value: '"'
           loc: dict:
             start: {pos: 0, line: 1, column: 0}
             end: {pos: 1, line: 1, column: 1}
@@ -336,7 +337,7 @@ describe 'tokenizer', fn:
       end_str_token
       to_equal
         dict:
-          value: '`'
+          value: '"'
           loc: dict:
             start: {pos: 7, line: 1, column: 7}
             end: {pos: 8, line: 1, column: 8}

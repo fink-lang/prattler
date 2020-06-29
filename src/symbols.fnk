@@ -94,9 +94,7 @@ curr_is_separator = fn ctx:
 
 
 ignorable = fn ctx, token:
-  match token && obj_has ctx.igns, token.value:
-    true: true
-    else: false
+  token and obj_has ctx.igns, token.value
 
 
 error_nud = fn ctx:
@@ -104,7 +102,7 @@ error_nud = fn ctx:
   {value} = curr_token
 
   add_error ctx,
-    `Unexpected token '${value}' at start of expression.`
+    "Unexpected token '${value}' at start of expression."
     curr_token
 
 
@@ -113,7 +111,7 @@ error_led = fn ctx:
   {value} = curr_token
 
   add_error ctx,
-    `Cannot use ${inspect value} as an infix operator.`
+    'Cannot use ${inspect value} as an infix operator.'
     curr_token
 
 

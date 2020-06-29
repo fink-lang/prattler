@@ -1,4 +1,5 @@
 {describe, it, expect, to_equal} = import '@fink/jest'
+{rx} = import '@fink/std-lib/regex'
 
 {init_parser, start_parser} = import '.'
 {curr_is, curr_value, curr_loc} = import '.'
@@ -54,9 +55,9 @@ init_test_lang = fn ctx:
 
     add_separator symbol ';'
 
-    add_identifier other()
+    add_identifier other _
 
-    add_operator string `'`
+    add_operator string "'"
 
     add_operator infix '='
     add_operator prefix '!'
@@ -74,7 +75,7 @@ parse = fn code:
 
 describe 'parser', fn:
   it 'parses simple expression', fn:
-    [ast, ctx] = parse `foobar = !123`
+    [ast, ctx] = parse 'foobar = !123'
 
     expect
       ast
@@ -102,14 +103,14 @@ describe 'parser', fn:
 
 
   it 'parses string collecting text to end of string', fn:
-    [ast, ctx] = parse `' foobar = 123 '`
+    [ast, ctx] = parse "' foobar = 123 '"
 
     expect
       ast
       to_equal
         {
           type: 'string'
-          op: `'`
+          op: "'"
           value: ' foobar = 123 '
         }
 
@@ -120,7 +121,7 @@ describe 'parser', fn:
 
 describe 'curr token tests, values, and assertions', fn:
   it 'checks if current token value is same as expected', fn:
-    [, ctx] = parse `foobar = 123`
+    [, ctx] = parse 'foobar = 123'
 
     expect
       curr_is ctx, '123'
@@ -128,7 +129,7 @@ describe 'curr token tests, values, and assertions', fn:
 
 
   it 'checks if current token value', fn:
-    [, ctx] = parse `foobar = 123`
+    [, ctx] = parse 'foobar = 123'
 
     expect
       curr_value ctx
@@ -136,7 +137,7 @@ describe 'curr token tests, values, and assertions', fn:
 
 
   it 'gets current token loc', fn:
-    [, ctx] = parse `foobar = 123`
+    [, ctx] = parse 'foobar = 123'
 
     expect
       curr_loc ctx
@@ -149,7 +150,7 @@ describe 'curr token tests, values, and assertions', fn:
 
 describe 'next token tests and assertions', fn:
   it 'checks if next token value is same as expected', fn:
-    [, ctx] = parse `foobar = 123;`
+    [, ctx] = parse 'foobar = 123;'
 
     expect
       next_is ctx, ';'
@@ -157,33 +158,33 @@ describe 'next token tests and assertions', fn:
 
 
   it 'checks if next token matches', fn:
-    [, ctx] = parse `foobar = 123;`
+    [, ctx] = parse 'foobar = 123;'
 
     expect
-      next_matches ctx, rx/;/
+      next_matches ctx, rx';'
       to_equal true
 
 
   it 'checks if end token matches', fn:
-    [, ctx] = parse `foo;bar`
+    [, ctx] = parse 'foo;bar'
 
     expect
-      next_matches ctx, rx/ni/
+      next_matches ctx, rx'ni'
       to_equal false
 
 
   it 'checks if does not match if at end', fn:
-    [, ctx] = parse `foo`
+    [, ctx] = parse 'foo'
 
     next_ctx = advance ctx
 
     expect
-      next_matches next_ctx, rx/foo/
+      next_matches next_ctx, rx'foo'
       to_equal false
 
 
   it 'gets next token loc', fn:
-    [, ctx] = parse `foobar = 123`
+    [, ctx] = parse 'foobar = 123'
 
     expect
       next_loc ctx
@@ -197,7 +198,7 @@ describe 'next token tests and assertions', fn:
 describe 'advance to next token', fn:
 
   it 'advances if next token value is as expected', fn:
-    [, ctx] = parse `foobar = 123; shrub = ni`
+    [, ctx] = parse 'foobar = 123; shrub = ni'
 
     next_ctx = advance_expected ctx, ';'
 
@@ -207,19 +208,19 @@ describe 'advance to next token', fn:
 
 
   it 'errors when next token value is unexpected', fn:
-    [, ctx] = parse `foobar = 123; shrub = ni`
+    [, ctx] = parse 'foobar = 123; shrub = ni'
 
     {errors: [{error}]} = advance_expected ctx, '=='
 
     expect
       error
-      to_equal `
+      to_equal "
         test.fnk:1:12
         1| foobar = 123; shrub = ni
                        ^
 
         Expected one of [ '==' ] but found ';'.
-        `
+        "
 
 
 describe 'handles errors', fn:
@@ -242,13 +243,13 @@ describe 'handles errors', fn:
 
     expect
       error
-      to_equal `
+      to_equal "
         test.fnk:1:0
         1| = 123
            ^
 
         Unexpected token '=' at start of expression.
-        `
+        "
 
 
   it 'using prefix operator as infix operator', fn:
@@ -256,13 +257,13 @@ describe 'handles errors', fn:
 
     expect
       error
-      to_equal `
+      to_equal "
         test.fnk:1:4
         1| foo ! ni
                ^
 
         Cannot use '!' as an infix operator.
-        `
+        "
 
 
   it 'using other as infix operator', fn:
@@ -270,25 +271,25 @@ describe 'handles errors', fn:
 
     expect
       error
-      to_equal `
+      to_equal "
         test.fnk:1:11
         1| foo = spam ni
                       ^
 
         Cannot use 'ni' as an infix operator.
-        `
+        "
 
 
   it 'collecting text when not finding expected end', fn:
-    [, {errors: [{error}]}] = parse `'foo bar`
+    [, {errors: [{error}]}] = parse "'foo bar"
 
     expect
       error
-      to_equal `
+      to_equal "
         test.fnk:1:8
         1| 'foo bar
                    ^
 
         Unexpected end of code.
-        `
+        "
 

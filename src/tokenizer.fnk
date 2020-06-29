@@ -1,11 +1,11 @@
 {obj_has} = import '@fink/std-lib/obj'
 {slice, ends_with} = import '@fink/std-lib/str'
-{split, find_index} = import '@fink/std-lib/regex'
+{rx, split, find_index} = import '@fink/std-lib/regex'
 {length} = import '@fink/std-lib/iter'
 
 
 get_partials = fn [start, ...rest], pre='':
-  key = `${pre}${start}`
+  key = '${pre}${start}'
   match rest:
     0 == length ?:
       {(key): false}
@@ -28,8 +28,7 @@ get_next_loc = fn prev_char, {pos, line, column}:
 
 get_next_char = fn code, prev_loc:
   char = code.(prev_loc.pos)
-  # TODO std-lib/str char_at str, idx
-  prev_char = code.(prev_loc.pos - 1)
+  prev_char = slice code, prev_loc.pos - 1, prev_loc.pos
 
   next_loc = get_next_loc prev_char, prev_loc
   [char, next_loc]
@@ -66,7 +65,7 @@ get_text = fn ctx, start, stop_at:
 
   text_len = length text
 
-  lines = split text, rx/\n/
+  lines = split text, rx'\n'
   lines_len = length lines
 
   line = start.line - 1 + lines_len
@@ -82,7 +81,7 @@ get_text = fn ctx, start, stop_at:
 
   partial_token = match text:
     ends_with ?, '\n':
-      [value, loc] = get_next_char code, {...end, line: end.line-1}
+      [value, loc] = get_next_char code, {...end, line: end.line - 1}
       {value, loc}
     else:
       [value, loc] = get_next_char code, end
@@ -101,7 +100,7 @@ get_next_token = fn ctx:
       match value_loc:
         {end: {pos: ? < length code}}:
           [char, char_loc] = get_next_char code, value_loc.end
-          new_value = `${value}${char}`
+          new_value = '${value}${char}'
 
           is_seperator = match separators:
             obj_has ?, char: true
@@ -110,7 +109,7 @@ get_next_token = fn ctx:
           is_partial = obj_has partials, new_value
 
           match true:
-            is_seperator && !is_partial:
+            is_seperator and not is_partial:
               token = {value, loc: {start: value_loc.start, end: value_loc.end}}
               partial_token = {value: char, loc: char_loc}
 

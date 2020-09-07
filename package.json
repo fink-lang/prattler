@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@fink/snippet": "^1.1.1",
-    "@fink/std-lib": "^3.1.1"
+    "@fink/std-lib": "^4.0.0"
   },
   "devDependencies": {
     "@fink/cli": "^6.1.0",

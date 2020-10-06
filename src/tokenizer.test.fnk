@@ -1,8 +1,8 @@
-{describe, it, expect, to_equal} = import '@fink/jest'
-{rx} = import '@fink/std-lib/regex'
+{describe, it, expect, to_equal} = import '@fink/jest/test.fnk'
+{rx} = import '@fink/std-lib/regex.fnk'
 
-{init_tokenizer, add_token} = import './tokenizer'
-{get_next_token, get_text} = import './tokenizer'
+{init_tokenizer, add_token} = import './tokenizer.fnk'
+{get_next_token, get_text} = import './tokenizer.fnk'
 
 
 expect_next_to_equal = fn expected:

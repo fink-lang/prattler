@@ -5,6 +5,13 @@
   "engines": {
     "node": ">=14.0.0"
   },
+  "type": "module",
+  "exports": {
+    "./": {
+      "import": "./",
+      "require": "./cjs/"
+    }
+  },
   "private": false,
   "publishConfig": {
     "access": "public"
@@ -20,7 +27,9 @@
     "clean": "rimraf ./build",
     "build": "run build:*",
     "build:dir": "mkdir -p ./build/pkg/",
-    "build:fnk": "fnk --src ./src --out-dir build/pkg --ignore './src/**/*.test.fnk'",
+    "build:fnk-esm": "fnk --module-type esm --src ./src --out-dir build/pkg --ignore './src/**/*.test.fnk'",
+    "build:fnk-cjs": "fnk --module-type cjs --src ./src --out-dir build/pkg/cjs --ignore './src/**/*.test.fnk'",
+    "build:files-cjs": "cp ./package-cjs.json ./build/pkg/cjs/package.json",
     "build:files": "cp ./package.json ./README.md ./LICENSE ./build/pkg/",
     "test": "run jest",
     "jest": "jest --verbose --runInBand --no-cache ",
@@ -28,19 +37,19 @@
     "release": "semantic-release"
   },
   "dependencies": {
-    "@fink/snippet": "^1.2.0",
-    "@fink/std-lib": "^4.0.0"
+    "@fink/snippet": "^2.0.0",
+    "@fink/std-lib": "^5.0.0"
   },
   "devDependencies": {
-    "@fink/cli": "^6.2.0",
-    "@fink/jest": "^5.2.0",
-    "@fink/larix": "^12.2.0",
-    "@fink/loxia": "^12.0.0",
+    "@fink/cli": "^7.0.0",
+    "@fink/jest": "^6.0.0",
+    "@fink/larix": "^12.3.0",
+    "@fink/loxia": "^13.0.1",
     "commitizen": "^4.0.4",
     "cz-conventional-changelog": "^3.1.0",
-    "jest-cli": "^26.1.0",
+    "jest-cli": "^26.5.0",
     "npx-run": "^2.1.2",
-    "semantic-release": "^17.1.1"
+    "semantic-release": "^17.1.2"
   },
   "config": {
     "commitizen": {

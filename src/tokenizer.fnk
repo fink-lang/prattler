@@ -1,13 +1,13 @@
-{obj_has} = import '@fink/std-lib/obj'
-{slice, ends_with} = import '@fink/std-lib/str'
-{rx, split, find_index} = import '@fink/std-lib/regex'
-{length} = import '@fink/std-lib/iter'
+{obj_has} = import '@fink/std-lib/obj.fnk'
+{slice, ends_with} = import '@fink/std-lib/str.fnk'
+{rx, split, find_index} = import '@fink/std-lib/regex.fnk'
+{length, is_empty} = import '@fink/std-lib/iter.fnk'
 
 
 get_partials = fn [start, ...rest], pre='':
   key = '${pre}${start}'
   match rest:
-    0 == length ?:
+    is_empty ?:
       {(key): false}
     else:
       partials = get_partials rest, key

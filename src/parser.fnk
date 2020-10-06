@@ -1,11 +1,11 @@
 {inspect} = import 'util'
 
-{matches} = import '@fink/std-lib/regex'
-{length} = import '@fink/std-lib/iter'
+{matches} = import '@fink/std-lib/regex.fnk'
+{is_empty} = import '@fink/std-lib/iter.fnk'
 
-{init_tokenizer, get_next_token, get_text} = import './tokenizer'
-{init_symbols, ignorable, next_lbp, led, nud} = import './symbols'
-{add_error} = import './errors'
+{init_tokenizer, get_next_token, get_text} = import './tokenizer.fnk'
+{init_symbols, ignorable, next_lbp, led, nud} = import './symbols.fnk'
+{add_error} = import './errors.fnk'
 
 
 # TODO: should it live here
@@ -21,7 +21,7 @@ start_token = dict:
 
 has_errors = fn ctx:
   match ctx:
-    {errors: 0 < length ?}: true
+    {errors: not is_empty ?}: true
     else: false
 
 

@@ -1,8 +1,8 @@
 {inspect} = import 'util'
-{obj_has} = import '@fink/std-lib/obj'
+{obj_has} = import '@fink/std-lib/obj.fnk'
 
-{add_token} = import './tokenizer'
-{add_error} = import './errors'
+{add_token} = import './tokenizer.fnk'
+{add_error} = import './errors.fnk'
 
 
 # TODO: this only works because '' can never be a token value
@@ -28,6 +28,8 @@ init_symbols = fn: dict:
   nuds: {}
   leds: {}
   igns: {}
+
+
 
 
 add_symbol = fn symb, lbp, is_sep: fn {symbols, tokenizer, ...ctx}:

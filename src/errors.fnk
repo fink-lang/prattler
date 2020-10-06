@@ -1,5 +1,5 @@
-{highlight_code_loc} = import '@fink/snippet'
-{stack_trace} = import '@fink/std-lib/stack-trace'
+{highlight_code_loc} = import '@fink/snippet/highlight.fnk'
+{stack_trace} = import '@fink/std-lib/stack-trace.fnk'
 
 
 get_error = fn ctx, msg, token, stack_func:

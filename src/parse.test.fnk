@@ -1,15 +1,15 @@
-{describe, it, expect, to_equal} = import '@fink/jest'
-{rx} = import '@fink/std-lib/regex'
+{describe, it, expect, to_equal} = import '@fink/jest/test.fnk'
+{rx} = import '@fink/std-lib/regex.fnk'
 
-{init_parser, start_parser} = import '.'
-{curr_is, curr_value, curr_loc} = import '.'
-{next_is, next_is_end, next_matches, next_loc} = import '.'
-{advance_expected, advance} = import '.'
-{expression, collect_text} = import '.'
+{init_parser, start_parser} = import './parser.fnk'
+{curr_is, curr_value, curr_loc} = import './parser.fnk'
+{next_is, next_is_end, next_matches, next_loc} = import './parser.fnk'
+{advance_expected, advance} = import './parser.fnk'
+{expression, collect_text} = import './parser.fnk'
 
-{add_separator, add_operator, add_identifier} = import './symbols'
-{add_whitespace} = import './symbols'
-{symbol, other_symbol} = import './symbols'
+{add_separator, add_operator, add_identifier} = import './symbols.fnk'
+{add_whitespace} = import './symbols.fnk'
+{symbol, other_symbol} = import './symbols.fnk'
 
 
 other = fn:

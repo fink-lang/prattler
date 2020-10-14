@@ -5,6 +5,7 @@
 {get_next_token, get_text} = import './tokenizer.fnk'
 
 
+
 expect_next_to_equal = fn expected:
   fn ctx:
     [next_token, next_ctx] = get_next_token ctx
@@ -16,6 +17,7 @@ expect_next_to_equal = fn expected:
     next_ctx
 
 
+
 tokenize = fn code:
   ctx = pipe init_tokenizer code, 'test.fnk':
     add_token ' '
@@ -25,6 +27,7 @@ tokenize = fn code:
     add_token '"'
     add_token 'ni', false
   ctx
+
 
 
 describe 'tokenizer', fn:

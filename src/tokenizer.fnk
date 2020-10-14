@@ -4,6 +4,7 @@
 {length, is_empty} = import '@fink/std-lib/iter.fnk'
 
 
+
 get_partials = fn [start, ...rest], pre='':
   key = '${pre}${start}'
   match rest:
@@ -12,6 +13,7 @@ get_partials = fn [start, ...rest], pre='':
     else:
       partials = get_partials rest, key
       {(key): true, ...partials}
+
 
 
 get_next_loc = fn prev_char, {pos, line, column}:
@@ -26,12 +28,14 @@ get_next_loc = fn prev_char, {pos, line, column}:
       {start, end}
 
 
+
 get_next_char = fn code, prev_loc:
   char = code.(prev_loc.pos)
   prev_char = slice code, prev_loc.pos - 1, prev_loc.pos
 
   next_loc = get_next_loc prev_char, prev_loc
   [char, next_loc]
+
 
 
 handle_end = fn value, start, end, ctx:
@@ -50,6 +54,7 @@ handle_end = fn value, start, end, ctx:
       list:
         {value, loc: {start, end}}
         {...ctx, partial_token: {value: '', loc: {start, end}}}
+
 
 
 get_text = fn ctx, start, stop_at:
@@ -91,6 +96,7 @@ get_text = fn ctx, start, stop_at:
   [{value: text, loc: {start, end}}, next_ctx]
 
 
+
 get_next_token = fn ctx:
   {code, partials, separators, partial_token} = ctx
   {value: start_val, loc: start_loc} = partial_token
@@ -127,6 +133,7 @@ get_next_token = fn ctx:
       done
 
   [next_token, next_ctx]
+
 
 
 init_tokenizer = fn code, filename:

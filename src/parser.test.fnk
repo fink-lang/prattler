@@ -12,6 +12,7 @@
 {symbol, other_symbol} = import './symbols.fnk'
 
 
+
 other = fn:
   dict:
     ...other_symbol
@@ -19,6 +20,7 @@ other = fn:
     nud: fn: fn ctx:
       value = curr_value ctx
       [{type: 'other', value}, ctx]
+
 
 
 infix = fn op:
@@ -30,6 +32,7 @@ infix = fn op:
       [{type: 'infx', op, left, right}, next_ctx]
 
 
+
 prefix = fn op:
   dict:
     ...symbol op
@@ -37,6 +40,7 @@ prefix = fn op:
     nud: fn lbp: fn ctx:
       [right, next_ctx] = expression ctx, lbp
       [{type: 'prefix', op, right}, next_ctx]
+
 
 
 string = fn op:
@@ -71,6 +75,7 @@ parse = fn code:
     start_parser
 
   expression ctx, 0
+
 
 
 describe 'parser', fn:
@@ -119,6 +124,7 @@ describe 'parser', fn:
       to_equal true
 
 
+
 describe 'curr token tests, values, and assertions', fn:
   it 'checks if current token value is same as expected', fn:
     [, ctx] = parse 'foobar = 123'
@@ -146,6 +152,7 @@ describe 'curr token tests, values, and assertions', fn:
           start: {column: 9, line: 1, pos: 9}
           end: {column: 12, line: 1, pos: 12}
         }
+
 
 
 describe 'next token tests and assertions', fn:
@@ -195,6 +202,7 @@ describe 'next token tests and assertions', fn:
         }
 
 
+
 describe 'advance to next token', fn:
 
   it 'advances if next token value is as expected', fn:
@@ -214,13 +222,14 @@ describe 'advance to next token', fn:
 
     expect
       error
-      to_equal "
+      to_equal '
         test.fnk:1:12
         1| foobar = 123; shrub = ni
                        ^
 
-        Expected one of [ '==' ] but found ';'.
-        "
+        Expected one of `==` but found `;`.
+        '
+
 
 
 describe 'handles errors', fn:
@@ -243,13 +252,13 @@ describe 'handles errors', fn:
 
     expect
       error
-      to_equal "
+      to_equal '
         test.fnk:1:0
         1| = 123
            ^
 
-        Unexpected token '=' at start of expression.
-        "
+        Unexpected token `=` at start of expression.
+        '
 
 
   it 'using prefix operator as infix operator', fn:
@@ -257,13 +266,13 @@ describe 'handles errors', fn:
 
     expect
       error
-      to_equal "
+      to_equal '
         test.fnk:1:4
         1| foo ! ni
                ^
 
-        Cannot use '!' as an infix operator.
-        "
+        Cannot use `!` as an infix operator.
+        '
 
 
   it 'using other as infix operator', fn:
@@ -276,7 +285,7 @@ describe 'handles errors', fn:
         1| foo = spam ni
                       ^
 
-        Cannot use 'ni' as an infix operator.
+        Cannot use `ni` as an infix operator.
         "
 
 

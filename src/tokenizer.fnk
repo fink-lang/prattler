@@ -101,7 +101,7 @@ get_next_token = fn ctx:
   {code, partials, separators, partial_token} = ctx
   {value: start_val, loc: start_loc} = partial_token
 
-  [next_token, next_ctx] = pipe [start_val, start_loc]:
+  [[next_token, next_ctx]] = pipe [start_val, start_loc]:
     unfold [value, value_loc]:
       match value_loc:
         {end: {pos: ? < length code}}:
@@ -129,7 +129,7 @@ get_next_token = fn ctx:
           [token, next_ctx] = handle_end value, start, end, ctx
           [token, next_ctx, true]
 
-    find [, , done]:
+    filter [, , done]:
       done
 
   [next_token, next_ctx]

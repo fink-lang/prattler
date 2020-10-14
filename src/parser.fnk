@@ -58,8 +58,7 @@ next_is = fn ctx, expected:
 
 
 next_is_any = fn ctx, ...expected:
-  --- istanbul ignore next ---
-  (next_value ctx) in expected
+  (next_value ctx) in [...expected]
 
 
 

@@ -37,19 +37,19 @@
     "release": "semantic-release"
   },
   "dependencies": {
-    "@fink/snippet": "^2.0.0",
+    "@fink/snippet": "^2.0.1",
     "@fink/std-lib": "^5.0.0"
   },
   "devDependencies": {
-    "@fink/cli": "^7.0.0",
-    "@fink/jest": "^6.0.0",
-    "@fink/larix": "^12.3.0",
-    "@fink/loxia": "^13.0.1",
+    "@fink/cli": "^8.0.0",
+    "@fink/jest": "^7.0.0",
+    "@fink/larix": "^13.1.0",
+    "@fink/loxia": "^14.0.2",
     "commitizen": "^4.0.4",
     "cz-conventional-changelog": "^3.1.0",
-    "jest-cli": "^26.5.0",
+    "jest-cli": "^26.5.3",
     "npx-run": "^2.1.2",
-    "semantic-release": "^17.1.2"
+    "semantic-release": "^17.2.1"
   },
   "config": {
     "commitizen": {

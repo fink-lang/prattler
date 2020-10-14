@@ -1,13 +1,13 @@
-{inspect} = import 'util'
 {obj_has} = import '@fink/std-lib/obj.fnk'
-
 {add_token} = import './tokenizer.fnk'
 {add_error} = import './errors.fnk'
+
 
 
 # TODO: this only works because '' can never be a token value
 other_token_value = ''
 auto = {auto: true}
+
 
 
 symbol = fn token_value: dict:
@@ -17,9 +17,12 @@ symbol = fn token_value: dict:
 # nud: not-set
 # led: not-set
 
+
+
 other_symbol = dict:
   token_value: other_token_value
   lbp: fn lbp: fn: lbp
+
 
 
 init_symbols = fn: dict:
@@ -28,7 +31,6 @@ init_symbols = fn: dict:
   nuds: {}
   leds: {}
   igns: {}
-
 
 
 
@@ -64,6 +66,7 @@ add_symbol = fn symb, lbp, is_sep: fn {symbols, tokenizer, ...ctx}:
       leds: next_leds
 
 
+
 add_whitespace = fn token_val: fn {tokenizer, igns, ...ctx}:
   next_tokenizer = pipe tokenizer:
     add_token token_val, true
@@ -74,10 +77,13 @@ add_whitespace = fn token_val: fn {tokenizer, igns, ...ctx}:
     igns: {...igns, (token_val): true}
 
 
+
 add_separator = fn symb: add_symbol symb, 0, true
 
 
+
 add_operator = fn symb: add_symbol symb, auto, true
+
 
 
 # TODO: keep it or just have add_identifier, add_keyword
@@ -90,13 +96,16 @@ add_keyword = fn symb: add_symbol symb, auto, false
 # TODO: add_comment
 
 
+
 curr_is_separator = fn ctx:
   {curr_token, tokenizer: {separators}} = ctx
   obj_has separators, curr_token.value
 
 
+
 ignorable = fn ctx, token:
   token and obj_has ctx.igns, token.value
+
 
 
 error_nud = fn ctx:
@@ -104,8 +113,9 @@ error_nud = fn ctx:
   {value} = curr_token
 
   add_error ctx,
-    "Unexpected token '${value}' at start of expression."
+    'Unexpected token `${value}` at start of expression.'
     curr_token
+
 
 
 error_led = fn ctx:
@@ -113,8 +123,9 @@ error_led = fn ctx:
   {value} = curr_token
 
   add_error ctx,
-    'Cannot use ${inspect value} as an infix operator.'
+    'Cannot use `${value}` as an infix operator.'
     curr_token
+
 
 
 nud = fn ctx:
@@ -133,6 +144,7 @@ nud = fn ctx:
       nuds.(other_token_value)
 
   nud_fn ctx
+
 
 
 led = fn ctx, left:
@@ -154,6 +166,7 @@ led = fn ctx, left:
       error_led
 
   led_fn ctx, left
+
 
 
 next_lbp = fn ctx, left:

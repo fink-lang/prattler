@@ -83,7 +83,7 @@ next_is_end = fn ctx, expected_end:
 advance = fn ctx:
   curr_token = ctx.next_token
 
-  [next_token, tokenizer] = pipe ctx.tokenizer:
+  [[next_token, tokenizer]] = pipe ctx.tokenizer:
     unfold tokenizer:
       # TODO: should it return [tokenizer_ctx, next_token]?
       [next_token, next_tokenizer] = get_next_token tokenizer
@@ -94,7 +94,7 @@ advance = fn ctx:
 
       ([token, next_tokenizer], next_tokenizer)
 
-    find [token]:
+    filter [token]:
       token != ingnorable_token
 
   {...ctx, tokenizer, curr_token, next_token}
@@ -140,7 +140,7 @@ expression = fn ctx, rbp:
       add_error ctx, 'Unexpected end of code.', ctx.next_token
 
     else:
-      [left, next_ctx] = pipe ctx:
+      [[left, next_ctx]] = pipe ctx:
         advance
         nud
         unfold [left, ctx]:
@@ -156,7 +156,7 @@ expression = fn ctx, rbp:
             else:
               [left, ctx, true]
 
-        find [,,found]:
+        filter [,,found]:
           found
 
       [left, next_ctx]

@@ -2,6 +2,13 @@
   "name": "@fink/prattler",
   "version": "0.0.0-semantically-released",
   "license": "MIT",
+  "keywords": [
+    "parser",
+    "compiler",
+    "ast",
+    "fink",
+    "fink-lang"
+  ],
   "engines": {
     "node": ">=14.0.0"
   },
@@ -37,14 +44,14 @@
     "release": "semantic-release"
   },
   "dependencies": {
-    "@fink/snippet": "^2.0.1",
-    "@fink/std-lib": "^5.0.0"
+    "@fink/snippet": "^2.1.0",
+    "@fink/std-lib": "^6.0.0"
   },
   "devDependencies": {
     "@fink/cli": "^8.0.0",
     "@fink/jest": "^7.0.0",
-    "@fink/larix": "^13.1.0",
-    "@fink/loxia": "^14.0.2",
+    "@fink/larix": "^15.0.0",
+    "@fink/loxia": "^17.0.0",
     "commitizen": "^4.0.4",
     "cz-conventional-changelog": "^3.1.0",
     "jest-cli": "^26.5.3",

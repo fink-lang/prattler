@@ -1,4 +1,5 @@
 {obj_has} = import '@fink/std-lib/obj.fnk'
+{is_fn} = import '@fink/std-lib/fn.fnk'
 {add_token} = import './tokenizer.fnk'
 {add_error} = import './errors.fnk'
 
@@ -44,13 +45,11 @@ add_symbol = fn symb, lbp, is_sep: fn {symbols, tokenizer, ...ctx}:
   next_lbps = {...lbps, (symb.token_value): symb.lbp symb_lbp}
 
   next_nuds = match symb.nud:
-    # TODO: {} should be a match operator: callable
-    {}: {...nuds, (symb.token_value): symb.nud symb_lbp}
+    is_fn ?: {...nuds, (symb.token_value): symb.nud symb_lbp}
     else: nuds
 
   next_leds = match symb.led:
-    # TODO: {} should be a match operator: callable
-    {}: {...leds, (symb.token_value): symb.led symb_lbp}
+    is_fn ?: {...leds, (symb.token_value): symb.led symb_lbp}
     else: leds
 
   next_tokenizer = pipe tokenizer:

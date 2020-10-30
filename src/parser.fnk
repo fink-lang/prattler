@@ -83,8 +83,8 @@ next_is_end = fn ctx, expected_end:
 advance = fn ctx:
   curr_token = ctx.next_token
 
-  [[next_token, tokenizer]] = pipe ctx.tokenizer:
-    unfold tokenizer:
+  [[next_token, tokenizer]] = pipe [, ctx.tokenizer]:
+    unfold [, tokenizer]:
       # TODO: should it return [tokenizer_ctx, next_token]?
       [next_token, next_tokenizer] = get_next_token tokenizer
 
@@ -92,7 +92,7 @@ advance = fn ctx:
         ignorable ctx, ?: ingnorable_token
         else: next_token
 
-      ([token, next_tokenizer], next_tokenizer)
+      [token, next_tokenizer]
 
     filter [token]:
       token != ingnorable_token

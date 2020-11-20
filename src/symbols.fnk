@@ -1,4 +1,3 @@
-{obj_has} = import '@fink/std-lib/obj.fnk'
 {is_fn} = import '@fink/std-lib/fn.fnk'
 {add_token} = import './tokenizer.fnk'
 {add_error} = import './errors.fnk'
@@ -98,12 +97,15 @@ add_keyword = fn symb: add_symbol symb, auto, false
 
 curr_is_separator = fn ctx:
   {curr_token, tokenizer: {separators}} = ctx
-  obj_has separators, curr_token.value
-
+  match curr_token:
+    {value: ? in separators}: true
+    else: false
 
 
 ignorable = fn ctx, token:
-  token and obj_has ctx.igns, token.value
+  match token:
+    {value: ? in ctx.igns}: true
+    else: false
 
 
 
@@ -132,7 +134,7 @@ nud = fn ctx:
   {value} = curr_token
 
   nud_fn = match true:
-    obj_has nuds, value:
+    value in nuds:
       nuds.(value)
 
     # TODO: should error_nud just be a nud func on seperators?
@@ -151,14 +153,14 @@ led = fn ctx, left:
   {value} = curr_token
 
   led_fn = match true:
-    obj_has leds, value:
+    value in leds:
       leds.(value)
 
     curr_is_separator ctx:
       error_led
 
     # istanbul ignore next
-    obj_has leds, other_token_value:
+    other_token_value in leds:
       leds.(other_token_value)
 
     else:
@@ -176,7 +178,7 @@ next_lbp = fn ctx, left:
     {end: true}:
       fn: 0
 
-    obj_has lbps, ?.value:
+    {value: ? in lbps}:
       lbps.(value)
 
     else:

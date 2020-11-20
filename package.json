@@ -44,14 +44,15 @@
     "release": "semantic-release"
   },
   "dependencies": {
+    "@fink/require-hook": "^6.2.0",
     "@fink/snippet": "^2.2.0",
     "@fink/std-lib": "^7.0.0"
   },
   "devDependencies": {
     "@fink/cli": "^8.0.0",
     "@fink/jest": "^7.0.0",
-    "@fink/larix": "^15.0.0",
-    "@fink/loxia": "^19.0.0",
+    "@fink/larix": "^16.0.0",
+    "@fink/loxia": "^20.0.0",
     "commitizen": "^4.0.4",
     "cz-conventional-changelog": "^3.1.0",
     "jest-cli": "^26.5.3",

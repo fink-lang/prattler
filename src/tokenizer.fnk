@@ -1,4 +1,3 @@
-{obj_has} = import '@fink/std-lib/obj.fnk'
 {slice, ends_with} = import '@fink/std-lib/str.fnk'
 {rx, split, find_index} = import '@fink/std-lib/regex.fnk'
 {length, is_empty} = import '@fink/std-lib/iter.fnk'
@@ -96,7 +95,6 @@ get_text = fn ctx, start, stop_at:
   [{value: text, loc: {start, end}}, next_ctx]
 
 
-
 get_next_token = fn ctx:
   {code, partials, separators, partial_token} = ctx
   {value: start_val, loc: start_loc} = partial_token
@@ -109,10 +107,10 @@ get_next_token = fn ctx:
           new_value = '${value}${char}'
 
           is_seperator = match separators:
-            obj_has ?, char: true
-            obj_has ?, value: true
+            char in ?: true
+            value in ?: true
 
-          is_partial = obj_has partials, new_value
+          is_partial =  new_value in partials
 
           match true:
             is_seperator and not is_partial:
@@ -167,5 +165,6 @@ add_token = fn value, is_sep=true: fn {tokens, partials, separators, ...ctx}:
     tokens: next_tokens
     partials: next_partials
     separators: next_seperators
+
 
 

@@ -1,0 +1,112 @@
+{add_error} = import './errors.fnk'
+
+
+auto = {auto: true}
+
+
+
+error_nud = fn ctx:
+  {curr_token} = ctx
+  {value} = curr_token
+
+  add_error ctx,
+    'Unexpected token `${value}` at start of expression.'
+    curr_token
+
+
+
+error_led = fn ctx:
+  {curr_token} = ctx
+  {value} = curr_token
+
+  add_error ctx,
+    'Cannot use `${value}` as an infix operator.'
+    curr_token
+
+
+
+left_binding = fn token_type: dict:
+  token_type
+
+  nud: fn: error_nud
+  lbp: fn lbp: fn: lbp
+  led: fn: error_led
+
+
+
+non_binding = fn token_type: dict:
+  token_type
+
+  nud: fn: error_nud
+  lbp: fn: fn: 0
+  led: fn: error_led
+
+
+
+add_expr = fn expr_builder, lbp_value: fn {expr_builders, ...ctx}:
+  {next_lbp, lbps, nuds, leds} = expr_builders
+
+  final_lbp_value = match lbp_value:
+    auto: next_lbp
+    else: lbp_value
+
+  {token_type, nud, lbp, led} = expr_builder
+
+  dict:
+    ...ctx
+    expr_builders: dict:
+      next_lbp: next_lbp + 2
+      nuds: {...nuds, (token_type): nud final_lbp_value}
+      lbps: {...lbps, (token_type): lbp final_lbp_value}
+      leds: {...leds, (token_type): led final_lbp_value}
+
+
+
+add_ignorable = fn token_type: fn {igns, ...ctx}:
+  dict:
+    ...ctx
+    igns: {...igns, (token_type): true}
+
+
+add_separator = fn expr_builder: add_expr expr_builder, 0
+
+
+add_operator = fn expr_builder: add_expr expr_builder, auto
+add_identifier = fn expr_builder: add_expr expr_builder, auto
+add_literal = fn expr_builder: add_expr expr_builder, auto
+
+
+
+is_ignorable = fn ctx, token:
+  ctx.igns.(token.type) == true
+
+
+
+nud = fn ctx:
+  {curr_token: {type}, expr_builders: {nuds}} = ctx
+  {(type): nud_fn} = nuds
+  nud_fn ctx
+
+
+
+led = fn ctx, left:
+  {curr_token: {type}, expr_builders: {leds}} = ctx
+  {(type): led_fn} = leds
+  led_fn ctx, left
+
+
+
+next_lbp = fn ctx, left:
+  {next_token: {type}, expr_builders: {lbps}} = ctx
+  {(type): lbp_fn} = lbps
+  lbp_fn ctx, left
+
+
+
+
+init_expr_builders = fn: dict:
+  next_lbp: 2
+  nuds: {}
+  lbps: {end: fn: 0}
+  leds: {}
+  igns: {}

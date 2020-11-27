@@ -1,75 +1,147 @@
 {describe, it, expect, to_equal} = import '@fink/jest/test.fnk'
-{rx} = import '@fink/std-lib/regex.fnk'
+
+{slice} = import '@fink/std-lib/str.fnk'
+{match_all, rx, split} = import '@fink/std-lib/regex.fnk'
+{length} = import '@fink/std-lib/iter.fnk'
 
 {init_parser, start_parser} = import './parser.fnk'
-{curr_is, curr_value, curr_loc} = import './parser.fnk'
-{next_is, next_is_end, next_matches, next_loc} = import './parser.fnk'
-{advance_expected, advance} = import './parser.fnk'
-{expression, collect_text} = import './parser.fnk'
+{curr_value, curr_loc} = import './parser.fnk'
+{next_is, next_is_end, next_loc} = import './parser.fnk'
+{advance, expression} = import './parser.fnk'
 
-{add_separator, add_operator, add_identifier} = import './symbols.fnk'
-{add_whitespace} = import './symbols.fnk'
-{symbol, other_symbol} = import './symbols.fnk'
+{add_separator, add_operator, add_identifier, add_literal} = import './expressions.fnk'
+{add_ignorable, left_binding, non_binding} = import './expressions.fnk'
 
 
 
-other = fn:
+literal = fn type:
   dict:
-    ...other_symbol
+    ...left_binding type
 
     nud: fn: fn ctx:
       value = curr_value ctx
-      [{type: 'other', value}, ctx]
+      [{type, value}, ctx]
 
 
 
-infix = fn op:
+infix = fn token_type:
   dict:
-    ...symbol op
+    ...left_binding token_type
 
     led: fn lbp: fn ctx, left:
+      op = curr_value ctx
       [right, next_ctx] = expression ctx, lbp
       [{type: 'infx', op, left, right}, next_ctx]
 
 
 
-prefix = fn op:
+prefix = fn token_type:
   dict:
-    ...symbol op
+    ...left_binding token_type
 
     nud: fn lbp: fn ctx:
+      op = curr_value ctx
       [right, next_ctx] = expression ctx, lbp
       [{type: 'prefix', op, right}, next_ctx]
 
 
 
-string = fn op:
+string = fn token_type:
   dict:
-    ...symbol op
+    ...left_binding token_type
+
     nud: fn: fn ctx:
-      [txt, next_ctx] = collect_text ctx, op
-      [{type: 'string', op, value: txt.value}, next_ctx]
+      value = curr_value ctx
+      [{type: 'string',  value}, ctx]
 
 
 
 init_test_lang = fn ctx:
   pipe ctx:
-    add_whitespace ' '
-    add_whitespace '\n'
+    add_ignorable 'whitespace'
 
-    add_separator symbol ';'
+    add_identifier literal 'ident'
 
-    add_identifier other _
-
-    add_operator string "'"
+    add_literal literal 'number'
+    add_literal string 'string'
 
     add_operator infix '='
     add_operator prefix '!'
+    add_separator non_binding ';'
+
+
+
+
+
+get_loc = fn start, text:
+  text_len = length text
+  lines = split text, rx'\n'
+  lines_len = length lines
+
+  line = start.line - 1 + lines_len
+  column = match lines_len:
+    1:
+      start.column + text_len
+    else:
+      [..., last] = lines
+      length last
+
+  {pos: start.pos + text_len, line, column}
+
+
+
+tokenize = fn code:
+  lex = rx'
+    ^(
+      (?<whitespace>\s+)
+      |(?<comment>#.*?\n)
+      |(?<string>\'.*?(\'|$))
+      |(?<assign>=)
+      |(?<operator>[!])
+      |(?<terminator>[;])
+      |(?<number>[0-9]+)
+      |(?<ident>\w+)
+      |(?<other>.)
+      |(?<end>$)
+    )
+  '
+
+  ctx = rec:
+    code
+    curly_count: 0
+    start: {pos: 0, line: 1, column: 0}
+
+  pipe ctx:
+    unfold , {code, start}=ctx:
+      code_slice = slice code, start.pos
+      [matched] = match_all code_slice, lex
+      [value] = matched
+
+      end = get_loc start, value
+      type = match matched.groups:
+        {string: {}}: 'string'
+        {comment: {}}: 'comment'
+        {whitespace: {}}: 'whitespace'
+        {ident: {}}: 'ident'
+        {number: {}}: 'number'
+        {other: {}}: 'other'
+        {end: {}}: 'end'
+        else: value
+
+      token = {type, value, loc: {start, end}}
+
+      acc = rec:
+        code
+        start: end
+
+      [token, acc]
 
 
 
 parse = fn code:
-  ctx = pipe {code, filename: 'test.fnk'}:
+  tokens = tokenize code
+
+  ctx = pipe {code, filename: 'test.fnk', tokens}:
     init_parser
     init_test_lang
     start_parser
@@ -85,22 +157,19 @@ describe 'parser', fn:
     expect
       ast
       to_equal
-        {
+        rec:
           type: 'infx'
           op: '='
-          left: {
-            type: 'other'
+          left: rec:
+            type: 'ident'
             value: 'foobar'
-          }
-          right: {
+
+          right: rec:
             type: 'prefix'
             op: '!'
-            right: {
-              type: 'other'
+            right: rec:
+              type: 'number'
               value: '123'
-            }
-          }
-        }
 
     expect
       next_is_end ctx
@@ -113,11 +182,9 @@ describe 'parser', fn:
     expect
       ast
       to_equal
-        {
+        rec:
           type: 'string'
-          op: "'"
-          value: ' foobar = 123 '
-        }
+          value: "' foobar = 123 '"
 
     expect
       next_is_end ctx
@@ -126,13 +193,6 @@ describe 'parser', fn:
 
 
 describe 'curr token tests, values, and assertions', fn:
-  it 'checks if current token value is same as expected', fn:
-    [, ctx] = parse 'foobar = 123'
-
-    expect
-      curr_is ctx, '123'
-      to_equal true
-
 
   it 'checks if current token value', fn:
     [, ctx] = parse 'foobar = 123'
@@ -148,10 +208,10 @@ describe 'curr token tests, values, and assertions', fn:
     expect
       curr_loc ctx
       to_equal
-        {
+        rec:
           start: {column: 9, line: 1, pos: 9}
           end: {column: 12, line: 1, pos: 12}
-        }
+
 
 
 
@@ -164,71 +224,37 @@ describe 'next token tests and assertions', fn:
       to_equal true
 
 
-  it 'checks if next token matches', fn:
-    [, ctx] = parse 'foobar = 123;'
-
-    expect
-      next_matches ctx, rx';'
-      to_equal true
-
-
-  it 'checks if end token matches', fn:
-    [, ctx] = parse 'foo;bar'
-
-    expect
-      next_matches ctx, rx'ni'
-      to_equal false
-
-
-  it 'checks if does not match if at end', fn:
-    [, ctx] = parse 'foo'
-
-    next_ctx = advance ctx
-
-    expect
-      next_matches next_ctx, rx'foo'
-      to_equal false
-
-
   it 'gets next token loc', fn:
     [, ctx] = parse 'foobar = 123'
 
     expect
       next_loc ctx
       to_equal
-        {
+        rec:
           start: {column: 12, line: 1, pos: 12}
           end: {column: 12, line: 1, pos: 12}
-        }
 
 
 
 describe 'advance to next token', fn:
 
-  it 'advances if next token value is as expected', fn:
-    [, ctx] = parse 'foobar = 123; shrub = ni'
-
-    next_ctx = advance_expected ctx, ';'
+  it 'advances to end token', fn:
+    [, ctx0] = parse 'foobar = 123'
+    ctx1 = advance ctx0
 
     expect
-      next_is next_ctx, 'shrub'
+      next_is_end ctx0
+      to_equal true
+
+    expect
+      next_is_end ctx1
       to_equal true
 
 
-  it 'errors when next token value is unexpected', fn:
-    [, ctx] = parse 'foobar = 123; shrub = ni'
+  # it 'errors when next token value is unexpected', fn:
+  #   [, ctx] = parse 'foobar = 123; shrub = ni'
 
-    {errors: [{error}]} = advance_expected ctx, '=='
-
-    expect
-      error
-      to_equal '
-        test.fnk:1:12
-        1| foobar = 123; shrub = ni
-                       ^
-
-        Expected one of `==` but found `;`.
-        '
+  #   {errors: [{error}]} = advance ctx, '=='
 
 
 
@@ -239,9 +265,9 @@ describe 'handles errors', fn:
     expect
       error
       to_equal '
-        test.fnk:1:8
+        test.fnk:1:7
         1| foobar =
-                   ^
+                  ^
 
         Unexpected end of code.
         '
@@ -286,19 +312,5 @@ describe 'handles errors', fn:
                       ^
 
         Cannot use `ni` as an infix operator.
-        "
-
-
-  it 'collecting text when not finding expected end', fn:
-    [, {errors: [{error}]}] = parse "'foo bar"
-
-    expect
-      error
-      to_equal "
-        test.fnk:1:8
-        1| 'foo bar
-                   ^
-
-        Unexpected end of code.
         "
 

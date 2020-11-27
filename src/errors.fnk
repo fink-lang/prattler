@@ -4,7 +4,7 @@
 
 
 get_error = fn ctx, msg, token, stack_func:
-  {tokenizer: {code, filename}} = ctx
+  {code, filename} = ctx
   {start: {line, column}} = token.loc
 
   # TODO: use error from std-lib?

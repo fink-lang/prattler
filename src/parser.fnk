@@ -1,19 +1,13 @@
-{matches} = import '@fink/std-lib/regex.fnk'
 {is_empty} = import '@fink/std-lib/iter.fnk'
+{next, iter} = import '@fink/std-lib/iter.fnk'
 
-{init_tokenizer, get_next_token, get_text} = import './tokenizer.fnk'
-{init_symbols, ignorable, next_lbp, led, nud} = import './symbols.fnk'
+{init_expr_builders, is_ignorable, next_lbp, led, nud} = import './expressions.fnk'
 {add_error} = import './errors.fnk'
 
 
 
-# TODO: should it live here
-ingnorable_token = {ignorable: true}
-
-
-
 start_token = dict:
-  start_token: true
+  start: true
   loc: dict:
     start: {pos: 0, line: 1, column: 0}
     end: {pos: 0, line: 1, column: 0}
@@ -37,11 +31,6 @@ curr_loc = fn {curr_token}:
 
 
 
-curr_is = fn ctx, expected:
-  expected == curr_value ctx
-
-
-
 next_value = fn {next_token}:
   next_token.value
 
@@ -57,89 +46,54 @@ next_is = fn ctx, expected:
 
 
 
-next_is_any = fn ctx, ...expected:
-  (next_value ctx) in expected
-
-
-
-next_matches = fn ctx, regex:
-  {next_token} = ctx
-  match next_token:
-    {end: true}:
-      false
-    else:
-      matches next_token.value, regex
-
-
-
-next_is_end = fn ctx, expected_end:
+next_is_end = fn ctx:
   match ctx:
-    {next_token: {end: true}}: true
-    next_is ?, expected_end: true
-    else: false
+    {next_token: {type: 'end'}}:
+      true
+    # {tokens: {done: true}}:
+    #   console.log '>>>>>'
+    #   true
+    else:
+      false
 
 
 
 advance = fn ctx:
-  curr_token = ctx.next_token
+  {next_token: curr_token, tokens, ignored_tokens} = ctx
 
-  [[next_token, tokenizer]] = pipe [, ctx.tokenizer]:
-    unfold [, tokenizer]:
-      # TODO: should it return [tokenizer_ctx, next_token]?
-      [next_token, next_tokenizer] = get_next_token tokenizer
+  match curr_token:
+    {type: 'end'}:
+      {...ctx, curr_token}
 
-      token = match next_token:
-        ignorable ctx, ?: ingnorable_token
-        else: next_token
-
-      [token, next_tokenizer]
-
-    filter [token]:
-      token != ingnorable_token
-
-  {...ctx, tokenizer, curr_token, next_token}
-
-
-
-advance_expected = fn ctx, ...expected:
-  match ctx:
-    next_is_any ?, ...expected:
-      advance ctx
     else:
-      {value} = ctx.next_token
-      [, next_ctx] = add_error ctx,
-        'Expected one of `${expected}` but found `${value}`.'
-        ctx.next_token
-      next_ctx
+      [next_token, next_tokens] = next tokens
 
+      match next_token:
+        is_ignorable ctx, ?:
+          advance rec:
+            ...ctx
+            tokens: next_tokens
+            ignored_tokens: [...ignored_tokens, next_token]
 
+        else:
+          next_ctx = rec:
+            ...ctx
+            tokens: next_tokens
+            curr_token
+            next_token
+            ignored_tokens
 
-collect_text = fn ctx, stop_at:
-  {curr_token} = ctx
-
-  [text, next_tokenizer] = get_text ctx.tokenizer, curr_token.loc.end, stop_at
-  [next_token, tokenizer] = get_next_token next_tokenizer
-
-  next_ctx = {...ctx, tokenizer, curr_token: text, next_token}
-
-  match next_ctx:
-    next_is_end ?:
-      [, end_ctx] = add_error next_ctx,
-        'Unexpected end of code.'
-        next_ctx.next_token
-      # TODO: advance end_ctx
-      [text, end_ctx]
-    else:
-      [text, advance next_ctx]
+          next_ctx
 
 
 
 expression = fn ctx, rbp:
   match ctx:
     next_is_end ?:
-      add_error ctx, 'Unexpected end of code.', ctx.next_token
+      add_error ctx, 'Unexpected end of code.', ctx.curr_token
 
     else:
+
       [[left, next_ctx]] = pipe ctx:
         advance
         nud
@@ -163,16 +117,20 @@ expression = fn ctx, rbp:
 
 
 
-init_parser = fn {code, filename}:
-  tokenizer = init_tokenizer code, filename
-  symbols = init_symbols _
+init_parser = fn {code, filename, tokens}:
+  expr_builders = init_expr_builders _
+  start_loc = {pos: 0, line: 1, column: 0}
 
   dict:
-    curr_token: start_token
-    next_token: start_token
+    code
+    filename
+    tokens: iter tokens
+    curr_token: {loc: {start: start_loc, end: start_loc}}
+    next_token: {loc: {start: start_loc, end: start_loc}}
+    ignored_tokens: []
+    expr_builders
     errors: []
-    tokenizer
-    symbols
+
 
 
 

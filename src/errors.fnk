@@ -8,7 +8,7 @@ get_error = fn ctx, msg, token, stack_func:
   {start: {line, column}} = token.loc
 
   # TODO: use error from std-lib?
-  error = dict:
+  error = rec:
     error: '
       ${filename}:${line}:${column}
       ${highlight_code_loc code, token.loc}

@@ -6,9 +6,9 @@
 
 
 
-start_token = dict:
+start_token = rec:
   start: true
-  loc: dict:
+  loc: rec:
     start: {pos: 0, line: 1, column: 0}
     end: {pos: 0, line: 1, column: 0}
 
@@ -121,7 +121,7 @@ init_parser = fn {code, filename, tokens}:
   expr_builders = init_expr_builders _
   start_loc = {pos: 0, line: 1, column: 0}
 
-  dict:
+  rec:
     code
     filename
     tokens: iter tokens

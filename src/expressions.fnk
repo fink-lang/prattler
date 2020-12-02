@@ -25,7 +25,7 @@ error_led = fn ctx:
 
 
 
-left_binding = fn token_type: dict:
+left_binding = fn token_type: rec:
   token_type
 
   nud: fn: error_nud
@@ -34,7 +34,7 @@ left_binding = fn token_type: dict:
 
 
 
-non_binding = fn token_type: dict:
+non_binding = fn token_type: rec:
   token_type
 
   nud: fn: error_nud
@@ -52,9 +52,9 @@ add_expr = fn expr_builder, lbp_value: fn {expr_builders, ...ctx}:
 
   {token_type, nud, lbp, led} = expr_builder
 
-  dict:
+  rec:
     ...ctx
-    expr_builders: dict:
+    expr_builders: rec:
       next_lbp: next_lbp + 2
       nuds: {...nuds, (token_type): nud final_lbp_value}
       lbps: {...lbps, (token_type): lbp final_lbp_value}
@@ -63,7 +63,7 @@ add_expr = fn expr_builder, lbp_value: fn {expr_builders, ...ctx}:
 
 
 add_ignorable = fn token_type: fn {igns, ...ctx}:
-  dict:
+  rec:
     ...ctx
     igns: {...igns, (token_type): true}
 
@@ -104,7 +104,7 @@ next_lbp = fn ctx, left:
 
 
 
-init_expr_builders = fn: dict:
+init_expr_builders = fn: rec:
   next_lbp: 2
   nuds: {}
   lbps: {end: fn: 0}

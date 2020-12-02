@@ -46,13 +46,13 @@
   "dependencies": {
     "@fink/require-hook": "^6.2.0",
     "@fink/snippet": "^2.2.0",
-    "@fink/std-lib": "^7.0.0"
+    "@fink/std-lib": "^8.0.1"
   },
   "devDependencies": {
-    "@fink/cli": "^8.0.0",
-    "@fink/jest": "^7.0.0",
-    "@fink/larix": "^16.0.0",
-    "@fink/loxia": "^20.0.0",
+    "@fink/cli": "^8.3.0",
+    "@fink/jest": "^7.3.1",
+    "@fink/larix": "^18.1.0",
+    "@fink/loxia": "^21.1.1",
     "commitizen": "^4.0.4",
     "cz-conventional-changelog": "^3.1.0",
     "jest-cli": "^26.5.3",

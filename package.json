@@ -14,9 +14,9 @@
   },
   "type": "module",
   "exports": {
-    "./": {
-      "import": "./",
-      "require": "./cjs/"
+    "./*": {
+      "import": "./*",
+      "require": "./cjs/*"
     }
   },
   "private": false,

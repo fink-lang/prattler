@@ -55,7 +55,7 @@
     "@fink/loxia": "^21.1.1",
     "commitizen": "^4.0.4",
     "cz-conventional-changelog": "^3.1.0",
-    "jest-cli": "^26.5.3",
+    "jest-cli": "^27.0.0",
     "npx-run": "^2.1.2",
     "semantic-release": "^17.2.1"
   },

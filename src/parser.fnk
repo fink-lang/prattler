@@ -1,5 +1,5 @@
 {is_empty} = import '@fink/std-lib/iter.fnk'
-{next, iter} = import '@fink/std-lib/iter.fnk'
+{next, iter, unfold, filter} = import '@fink/std-lib/iter.fnk'
 
 {init_expr_builders, is_ignorable, next_lbp, led, nud} = import './expressions.fnk'
 {add_error} = import './errors.fnk'
@@ -97,7 +97,7 @@ expression = fn ctx, rbp:
       [[left, next_ctx]] = pipe ctx:
         advance
         nud
-        unfold [left, ctx]:
+        unfold fn [left, ctx]:
           match ctx:
             has_errors ?:
               [left, ctx, true]
@@ -110,7 +110,7 @@ expression = fn ctx, rbp:
             else:
               [left, ctx, true]
 
-        filter [,,found]:
+        filter fn [,,found]:
           found
 
       [left, next_ctx]

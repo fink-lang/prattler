@@ -2,7 +2,7 @@
 
 {slice} = import '@fink/std-lib/str.fnk'
 {match_all, rx, split} = import '@fink/std-lib/regex.fnk'
-{length} = import '@fink/std-lib/iter.fnk'
+{length, unfold_ac} = import '@fink/std-lib/iter.fnk'
 
 {init_parser, start_parser} = import './parser.fnk'
 {curr_value, curr_loc} = import './parser.fnk'
@@ -112,7 +112,7 @@ tokenize = fn code:
     start: {pos: 0, line: 1, column: 0}
 
   pipe ctx:
-    unfold , {code, start}=ctx:
+    unfold_ac fn , {code, start}=ctx:
       code_slice = slice code, start.pos
       [matched] = match_all code_slice, lex
       [value] = matched
